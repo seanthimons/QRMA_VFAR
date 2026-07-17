@@ -1,0 +1,11 @@
+^\.git$
+^\.gitignore$
+^\.Rprofile$
+^air\.toml$
+^boosters$
+^boosters\.toml$
+^data$
+^dev$
+^qrmavfar\.Rcheck$
+^renv$
+^renv\.lock$
