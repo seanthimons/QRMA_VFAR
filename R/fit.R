@@ -6,8 +6,12 @@
 #' @param data Grouped dose-response data accepted by [as_dose_response()].
 #' @param alpha Significance level used for the `passes` indicator.
 #'
-#' @return A one-row tibble containing the test statistic, one-sided p-value,
-#'   significance level, and pass indicator.
+#' @return A one-row tibble containing the signed trend statistic and its
+#'   one-sided p-value (which drive the `passes` indicator), the equivalent
+#'   two-sided chi-squared reporting columns (`chi_square` = statistic squared,
+#'   `chi_square_df` = 1, `chi_square_p_value`), the significance level, and the
+#'   pass indicator. The chi-squared columns are for reporting only; the
+#'   pass/fail rule remains the one-sided normal test.
 #' @export
 dose_trend_test <- function(data, alpha = 0.05) {
   data <- as_dose_response(data)
@@ -25,10 +29,19 @@ dose_trend_test <- function(data, alpha = 0.05) {
     NA_real_
   }
   p_value <- if (is.na(statistic)) NA_real_ else stats::pnorm(statistic, lower.tail = FALSE)
+  chi_square <- statistic^2
+  chi_square_p_value <- if (is.na(statistic)) {
+    NA_real_
+  } else {
+    stats::pchisq(chi_square, df = 1L, lower.tail = FALSE)
+  }
 
   tibble::tibble(
     statistic = statistic,
     p_value = p_value,
+    chi_square = chi_square,
+    chi_square_df = 1L,
+    chi_square_p_value = chi_square_p_value,
     alpha = alpha,
     passes = !is.na(p_value) & p_value < alpha,
     alternative = "increasing"

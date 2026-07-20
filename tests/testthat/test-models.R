@@ -46,6 +46,20 @@ test_that("Ward diagnostics identify the beta-Poisson model", {
   expect_false(assessment$appropriate[assessment$model == "exponential"])
 })
 
+test_that("trend test reports a chi-squared equivalent without changing the pass rule", {
+  trend <- dose_trend_test(ward_fixture())
+  # chi-squared reporting columns are the two-sided Z^2 (1 df) form
+  expect_equal(trend$chi_square, trend$statistic^2)
+  expect_identical(trend$chi_square_df, 1L)
+  expect_equal(
+    trend$chi_square_p_value,
+    2 * stats::pnorm(abs(trend$statistic), lower.tail = FALSE)
+  )
+  # the one-sided normal decision is unchanged
+  expect_equal(trend$p_value, stats::pnorm(trend$statistic, lower.tail = FALSE))
+  expect_true(trend$passes)
+})
+
 test_that("chi-squared and information-criterion preferences remain distinct", {
   fits <- fit_dose_response_models(ward_fixture())
   fits$exponential$deviance <- 10
