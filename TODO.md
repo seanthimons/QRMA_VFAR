@@ -18,6 +18,134 @@ tradeoffs.
 9. Output plots: exponential and beta-Poisson.
 10. Output the best-fitting model choice.
 
+## Verified implementation status (code audit, 2026-07-20)
+
+Each item below was independently verified against the working source in `R/*.R`
+and `tests/testthat/*.R` — not against this file's own self-description. Verdicts:
+IMPLEMENTED (code does what the item asks), PARTIAL (present but incomplete),
+MISMATCH (code does something methodologically different), MISSING (absent).
+
+| # | Verdict | Summary |
+|---|---------|---------|
+| 1 | PARTIAL | Quantal structure enforced; N≥3 counts raw rows not distinct doses; "more than one nonzero response" not checked at all. |
+| 2 | MISMATCH | Trend test evaluated by one-sided normal/Z (`pnorm`), not chi-squared. |
+| 3 | IMPLEMENTED | Binomial MLE (`optim`/BFGS) + chi-squared deviance goodness-of-fit. |
+| 4 | IMPLEMENTED* | Percentile bootstrap CIs, 95% default, MLE refit per replicate. Caveats below. |
+| 5 | IMPLEMENTED | Δdeviance vs chi-squared; hard-wired to exactly two models. |
+| 6 | MISSING (by design) | No pooling; item states this is done manually / out of scope. |
+| 7 | IMPLEMENTED | Residual deviance vs saturated base case, `qchisq(df_residual)`. |
+| 8 | IMPLEMENTED | Deviances + chi-squared p-values surfaced as tibble columns. |
+| 9 | PARTIAL | Exponential + approximate BP fully plotted; exact model's CI bands and bootstrap-parameter plot break. |
+| 10 | IMPLEMENTED* | `recommendation` label + chi-squared-driven `preferred`; two-model only. |
+
+### Detail and evidence
+
+1. **Data criteria — PARTIAL.** Quantal/binomial structure is enforced
+   (`R/data.R:115-131`: finite, non-negative whole-number counts, `positive +
+   negative > 0` per group). Two gaps: (a) the `nrow(data) < 3` guard
+   (`R/data.R:119`) runs *before* the group-by-dose aggregation
+   (`R/data.R:86-92`), so it counts raw input rows, not distinct dose groups —
+   3 rows collapsing to 2 doses passes. (b) There is **no check** that more than
+   one dose group has `positive > 0`; a single-responding-dose or all-zero
+   dataset validates clean.
+
+2. **Cochran-Armitage trend by chi-squared — MISMATCH.** `dose_trend_test()`
+   (`R/fit.R:18-27`) computes a standardized CA trend **Z** on log-dose scores
+   and evaluates it with `stats::pnorm(statistic, lower.tail = FALSE)` — one-sided
+   normal, no `pchisq`, no `Z^2`, no degrees of freedom. The item requires
+   chi-squared evaluation; as written it is not satisfied. (The notes below
+   already flagged this honestly.)
+
+3. **Exp + beta-Poisson MLE, absolute fit by chi-squared — IMPLEMENTED.**
+   Negative binomial log-likelihood minimized by `stats::optim(method="BFGS")`
+   (`R/fit.R:61-73`); absolute fit via residual deviance vs `stats::qchisq` /
+   `stats::pchisq` on `df_residual` (`R/fit.R:231-238`). Note "beta-Poisson" in
+   the automatic two-model set (`fit_dose_response_models`, `R/fit.R:136-139`)
+   means the **approximate** model; the exact beta-Poisson is fittable but
+   opt-in only via `fit_dose_response(data, "exact_beta_poisson")`.
+
+4. **Bootstrapped 95% CIs — IMPLEMENTED, with caveats.** Grouped binomial
+   bootstrap refitting the MLE each replicate (`R/bootstrap.R:59`,
+   `bootstrap_refit` at `R/bootstrap.R:105-109`); percentile CIs with 95% default
+   (`bootstrap_confint`, `R/bootstrap.R:187-208`). Works for all three models
+   including the exact one (model-agnostic via `model_parameters()` +
+   `effective_dose()`). Caveats: (a) default `resample = "observed"` draws from
+   observed group proportions, not the fitted-MLE curve — strict parametric
+   bootstrap requires `resample = "fitted"`; (b) intervals cover parameters +
+   ED10/ED50 but not a predicted-curve band; (c) no dedicated unit test exercises
+   `bootstrap_confint` (only `test-bootstrap-plot.R` exists).
+
+5. **Relative fit by Δdeviance vs chi-squared — IMPLEMENTED.**
+   `compare_dose_response_models()` (`R/fit.R`) computes Δdeviance =
+   simpler − fuller, compared to `qchisq(1-alpha, df = Δparameters)`; `preferred`
+   follows this test (AIC/BIC reported separately, not driving `preferred`). It is
+   hard-wired to exactly two fits (`if (length(fits) != 2L) stop(...)`), so the
+   exact beta-Poisson third model cannot enter — see the three-model decision
+   note below.
+
+6. **Pooling — MISSING by design.** No pooling / multi-dataset aggregation /
+   pooled-vs-unpooled comparison anywhere in `R/`. The only "combining" is
+   `as_dose_response()` deduplicating rows at the same dose within one dataset
+   (`R/data.R:86-92`). The item itself states pooling is done manually by
+   analysts, so the absence is consistent, not a defect.
+
+7. **Sufficient fit vs base case — IMPLEMENTED.** The base case is the saturated
+   model: `saturated_log_lik` (`R/fit.R:78-83`), `deviance = 2*(saturated_log_lik
+   - log_lik)` (`R/fit.R:99`), tested against `qchisq(1-alpha, df_residual)` in
+   `goodness_of_fit()` (`R/fit.R:231-238`). Genuinely distinct from item 5
+   (which compares the two fitted models to each other on Δparameters df).
+
+8. **Output deviances + chi-squared p-values — IMPLEMENTED.** Surfaced as real
+   columns, not internal scalars: `goodness_of_fit()` → `deviance`, `p_value`
+   (`R/fit.R:236-237`); `compare_dose_response_models()` → `deviance`,
+   `deviance_difference`, `chi_square_p_value`; `glance.qdr_fit()` → `deviance`
+   (`R/tidiers.R:66`). `analyze_dose_response()` carries both tibbles on the
+   `qdr_analysis` object.
+
+9. **Output plots — PARTIAL.** `plot_dose_response()` / `autoplot.qdr_analysis`
+   plot data points, fitted curve, and bootstrap CI ribbons for exponential and
+   approximate beta-Poisson. The exact model breaks in two spots that hardcode the
+   approximate-BP `n50` algebra: `bootstrap_prediction_matrix()`
+   (`R/plot.R:60-70`) and `autoplot.qdr_bootstrap()` (`R/plot.R:152-166`), both
+   using `if (model == "exponential") … else {n50 algebra}`. The exact model's
+   bare estimate line works (it routes through `model_probability`), but its CI
+   bands and bootstrap-parameter plot do not.
+
+10. **Best-fitting model choice — IMPLEMENTED, two-model scope.** Delivered as a
+    sorted per-model tibble with a `recommendation` label
+    (`recommended` / `acceptable_alternative` / `preferred_but_inadequate` /
+    `not_recommended`) in `build_model_assessment()` (`R/assessment.R:27-67`),
+    printed by `print.qdr_analysis` (`R/analysis.R:83-87`). `preferred` is driven
+    by the chi-squared deviance test; `consensus_model_decision()` adds an
+    experimental three-vote (chi-squared/AIC/BIC) summary. Two-model only — the
+    exact model is excluded via `fit_dose_response_models` and the `length(fits)
+    != 2L` guard.
+
+### Corrections to the planning docs
+
+- `consensus_model_decision()` is **present and exported** (`R/assessment.R:111-182`,
+  `NAMESPACE`). The implementation plan and `HANDOFF.md` claim it was "missing from
+  the working tree" — that claim is stale; the function is in the working source.
+- The exact beta-Poisson model **exists and is wired into fitting, `effective_dose`,
+  and bootstrap** (as of the Phase 3 commit), but is opt-in and absent from the
+  "Current implementation notes" below.
+
+### Remaining work, grouped
+
+- **Independent of the three-model decision — DONE (2026-07-20):**
+  - Item 1: `validate_dose_response_groups()` now enforces ≥3 distinct dose groups
+    (post-aggregation) and ≥2 groups with a nonzero response (`R/data.R`). Commit
+    `5776110`.
+  - Item 2: `dose_trend_test()` now reports `chi_square`, `chi_square_df`, and
+    `chi_square_p_value` (two-sided `Z^2`, 1 df); the one-sided `p_value`/`passes`
+    decision is unchanged. Commit `d8e0fb9`.
+  - Item 4: dedicated `test-bootstrap-confint.R` covering percentile bounds,
+    level widening, converged-only filtering, and input validation. Commit
+    `8f60fb0`.
+- **Gated on the three-model / Pinch Point 7 owner decision** (do not auto-decide):
+  - Items 5, 9, 10: extend comparison / plotting / best-model selection to include
+    the exact beta-Poisson as a third, non-nested, 2-parameter model.
+
 ## Current implementation notes
 
 - `dose_trend_test()` currently preserves the package's existing log-dose,
