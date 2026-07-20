@@ -67,6 +67,7 @@ model_probability <- function(model, dose, coefficients) {
   switch(
     model,
     exponential = exponential_response(dose, coefficients[["k"]]),
-    beta_poisson = beta_poisson_response(dose, coefficients[["alpha"]], coefficients[["n50"]])
+    beta_poisson = beta_poisson_response(dose, coefficients[["alpha"]], coefficients[["n50"]]),
+    exact_beta_poisson = exact_beta_poisson_response(dose, coefficients[["alpha"]], coefficients[["beta"]])
   )
 }

@@ -49,7 +49,7 @@ dose_trend_test <- function(data, alpha = 0.05) {
 #' @export
 fit_dose_response <- function(
   data,
-  model = c("exponential", "beta_poisson"),
+  model = c("exponential", "beta_poisson", "exact_beta_poisson"),
   start = NULL,
   control = list(maxit = 2000, reltol = 1e-10)
 ) {
@@ -141,7 +141,12 @@ fit_dose_response_models <- function(data, check_trend = TRUE, alpha = 0.05) {
 }
 
 model_parameters <- function(model) {
-  switch(model, exponential = "k", beta_poisson = c("alpha", "n50"))
+  switch(
+    model,
+    exponential = "k",
+    beta_poisson = c("alpha", "n50"),
+    exact_beta_poisson = c("alpha", "beta")
+  )
 }
 
 default_start <- function(data, model) {
@@ -149,7 +154,8 @@ default_start <- function(data, model) {
   switch(
     model,
     exponential = c(k = log(2) / middle_dose),
-    beta_poisson = c(alpha = 1, n50 = middle_dose)
+    beta_poisson = c(alpha = 1, n50 = middle_dose),
+    exact_beta_poisson = c(alpha = 0.5, beta = middle_dose / 3)
   )
 }
 
@@ -164,7 +170,12 @@ validate_start <- function(start, expected_names) {
 }
 
 model_label <- function(model) {
-  switch(model, exponential = "Exponential", beta_poisson = "Beta-Poisson")
+  switch(
+    model,
+    exponential = "Exponential",
+    beta_poisson = "Beta-Poisson",
+    exact_beta_poisson = "Exact Beta-Poisson"
+  )
 }
 
 #' Calculate an effective dose
@@ -182,6 +193,20 @@ effective_dose <- function(object, probability = 0.5) {
 
   if (object$model == "exponential") {
     return(-log1p(-probability) / object$coefficients[["k"]])
+  }
+
+  if (object$model == "exact_beta_poisson") {
+    alpha <- object$coefficients[["alpha"]]
+    beta <- object$coefficients[["beta"]]
+    doses <- object$data$dose
+    lo <- log(min(doses[doses > 0])) - 5
+    hi <- log(max(doses)) + 15
+    solve_one <- function(p) {
+      target <- 1 - p
+      f <- function(log_d) exact_beta_poisson_survival(exp(log_d), alpha, beta) - target
+      exp(stats::uniroot(f, interval = c(lo, hi), extendInt = "downX")$root)
+    }
+    return(vapply(probability, solve_one, numeric(1)))
   }
 
   alpha <- object$coefficients[["alpha"]]
