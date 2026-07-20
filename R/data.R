@@ -83,7 +83,7 @@ as_dose_response <- function(data, dose = NULL, positive = NULL, negative = NULL
   )
   validate_dose_response_columns(standardized)
 
-  standardized |>
+  grouped <- standardized |>
     dplyr::group_by(.data$dose) |>
     dplyr::summarise(
       positive = sum(.data$positive),
@@ -95,6 +95,8 @@ as_dose_response <- function(data, dose = NULL, positive = NULL, negative = NULL
       response = .data$positive / .data$total
     ) |>
     dplyr::arrange(.data$dose)
+  validate_dose_response_groups(grouped)
+  grouped
 }
 
 detect_column <- function(source_names, normalized_names, candidates, label) {
@@ -116,9 +118,6 @@ validate_dose_response_columns <- function(data) {
       stop(sprintf("`%s` must contain only finite numeric values.", column), call. = FALSE)
     }
   }
-  if (nrow(data) < 3L) {
-    stop("At least three dose groups are required.", call. = FALSE)
-  }
   if (any(data$dose <= 0)) {
     stop("`dose` values must be greater than zero.", call. = FALSE)
   }
@@ -128,6 +127,18 @@ validate_dose_response_columns <- function(data) {
   }
   if (any(data$positive + data$negative == 0)) {
     stop("Every dose group must contain at least one observation.", call. = FALSE)
+  }
+  invisible(data)
+}
+
+# Criteria evaluated on the aggregated dose groups (post dedup-by-dose), so the
+# minimum-N and nonzero-response requirements count distinct doses, not raw rows.
+validate_dose_response_groups <- function(data) {
+  if (nrow(data) < 3L) {
+    stop("At least three distinct dose groups are required.", call. = FALSE)
+  }
+  if (sum(data$positive > 0) < 2L) {
+    stop("At least two dose groups must have a nonzero response.", call. = FALSE)
   }
   invisible(data)
 }
