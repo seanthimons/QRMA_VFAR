@@ -11,15 +11,30 @@ test_that("Ward data is standardized from legacy column names", {
 
 test_that("duplicate doses are combined", {
   input <- data.frame(
-    dose = c(1, 1, 10),
-    pos = c(1, 2, 4),
-    neg = c(3, 2, 0)
+    dose = c(1, 1, 10, 100),
+    pos = c(1, 2, 4, 3),
+    neg = c(3, 2, 0, 1)
   )
   result <- as_dose_response(input)
 
-  expect_equal(nrow(result), 2L)
+  expect_equal(nrow(result), 3L)
   expect_equal(result$positive[[1L]], 3)
   expect_equal(result$negative[[1L]], 5)
+})
+
+test_that("fewer than three distinct dose groups fail after combining", {
+  # three raw rows collapsing to two distinct doses is not enough
+  expect_error(
+    as_dose_response(data.frame(dose = c(1, 1, 10), pos = c(1, 1, 4), neg = c(3, 3, 1))),
+    "three distinct dose groups"
+  )
+})
+
+test_that("more than one nonzero response is required", {
+  expect_error(
+    as_dose_response(data.frame(dose = c(1, 10, 100), pos = c(0, 0, 5), neg = c(5, 5, 0))),
+    "nonzero response"
+  )
 })
 
 test_that("invalid grouped counts fail before fitting", {
