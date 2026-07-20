@@ -28,7 +28,7 @@ MISMATCH (code does something methodologically different), MISSING (absent).
 | # | Verdict | Summary |
 |---|---------|---------|
 | 1 | PARTIAL | Quantal structure enforced; N≥3 counts raw rows not distinct doses; "more than one nonzero response" not checked at all. |
-| 2 | MISMATCH | Trend test evaluated by one-sided normal/Z (`pnorm`), not chi-squared. |
+| 2 | IMPLEMENTED | Directional one-sided pre-screen (`Zca` on log dose) that reproduces the Weir gate exactly; see clarification below. |
 | 3 | IMPLEMENTED | Binomial MLE (`optim`/BFGS) + chi-squared deviance goodness-of-fit. |
 | 4 | IMPLEMENTED* | Percentile bootstrap CIs, 95% default, MLE refit per replicate. Caveats below. |
 | 5 | IMPLEMENTED | Δdeviance vs chi-squared; hard-wired to exactly two models. |
@@ -49,12 +49,21 @@ MISMATCH (code does something methodologically different), MISSING (absent).
    one dose group has `positive > 0`; a single-responding-dose or all-zero
    dataset validates clean.
 
-2. **Cochran-Armitage trend by chi-squared — MISMATCH.** `dose_trend_test()`
-   (`R/fit.R:18-27`) computes a standardized CA trend **Z** on log-dose scores
-   and evaluates it with `stats::pnorm(statistic, lower.tail = FALSE)` — one-sided
-   normal, no `pchisq`, no `Z^2`, no degrees of freedom. The item requires
-   chi-squared evaluation; as written it is not satisfied. (The notes below
-   already flagged this honestly.)
+2. **Cochran-Armitage trend — IMPLEMENTED (requirement clarified).** The item's
+   wording "evaluated by chi-squared" was a conflation. The stakeholder clarified
+   (2026-07-20): item 2 is a **pre-screening test for a monotonic increasing
+   trend** — response rising with dose — run before any model is fit, exactly as
+   the Weir CAMRA code does it (`if (Zca > 1.644)` in
+   `dev/CAMRA_bootstrap_v10_5_kh.R:57-62`). `dose_trend_test()` (`R/fit.R`)
+   reproduces that reference **line for line**: log-dose scores, the same `Zca`
+   formula, and a one-sided gate (`pnorm(Zca, lower.tail = FALSE) < alpha`, i.e.
+   `Zca > 1.645`). The test is directional by design — a decreasing trend must
+   not pass — so a chi-squared (two-sided `Z^2`) gate would be *incorrect* here.
+   The chi-squared distribution is used elsewhere in the workflow (goodness-of-fit
+   and best-model comparison, items 3/5/7/10), which is where the reproduction
+   target's `chisq.*` columns come from — there is no trend statistic in that
+   target at all. Reporting-only chi-squared columns briefly added to the trend
+   test were reverted once the intent was clarified.
 
 3. **Exp + beta-Poisson MLE, absolute fit by chi-squared — IMPLEMENTED.**
    Negative binomial log-likelihood minimized by `stats::optim(method="BFGS")`
@@ -136,9 +145,11 @@ MISMATCH (code does something methodologically different), MISSING (absent).
   - Item 1: `validate_dose_response_groups()` now enforces ≥3 distinct dose groups
     (post-aggregation) and ≥2 groups with a nonzero response (`R/data.R`). Commit
     `5776110`.
-  - Item 2: `dose_trend_test()` now reports `chi_square`, `chi_square_df`, and
-    `chi_square_p_value` (two-sided `Z^2`, 1 df); the one-sided `p_value`/`passes`
-    decision is unchanged. Commit `d8e0fb9`.
+  - Item 2: confirmed `dose_trend_test()` correctly implements the directional
+    monotonic-increasing pre-screen (Weir `Zca > 1.645` gate). Sharpened the docs
+    and added a directional test (increasing passes, decreasing does not). The
+    chi-squared reporting columns from the earlier misread of the requirement
+    (commit `d8e0fb9`) were reverted after the stakeholder clarified the intent.
   - Item 4: dedicated `test-bootstrap-confint.R` covering percentile bounds,
     level widening, converged-only filtering, and input validation. Commit
     `8f60fb0`.
