@@ -1,41 +1,41 @@
-#' Exact beta-Poisson dose-response (confluent hypergeometric) — prototype
-#'
-#' Response:  P(d) = 1 - M(alpha, alpha + beta, -d)
-#' where M = 1F1 is Kummer's confluent hypergeometric function and (alpha, beta)
-#' are the shape parameters of the Beta(alpha, beta) infectivity distribution
-#' (single-hit theory). This file prototypes ONLY the numerically robust
-#' evaluator + response function; package wiring (fit / effective_dose /
-#' bootstrap / comparison) comes in later phases.
-#'
-#' We compute and return the SURVIVAL S = 1 - P directly, because the binomial
-#' log-likelihood needs log(1 - P) = log(S) for non-responders, and S is the
-#' hard-to-get tail at large dose. The response is 1 - S.
-#'
-#' VALIDATED NUMERICAL STRATEGY  (worst-case relative error in S = 2.3e-9 over
-#' alpha in [0.05, 2], beta in [0.1, 1e5], dose in [1e-3, 1e5], vs mpmath at 50
-#' digits; re-certify against Rmpfr in the package test suite):
-#'
-#'   route each dose element to exactly one method --
-#'     * dose < 1e-4                          -> linear limit  S = 1 - d*alpha/(alpha+beta)
-#'     * asymptotic ACCEPTED when ALL hold:   -> large-argument asymptotic
-#'          dose >= alpha+beta                   (dose past the parameter scale)
-#'          exp(-dose) < 1e-12                   (recessive ~e^-d term negligible; dose > ~28)
-#'          2F0 truncation term < 1e-12          (algebraic asymptotic converged)
-#'     * otherwise                            -> log-space Kummer series (always
-#'                                               correct, never overflows)
-#'
-#' WHY NOT the legacy drfunc approximation `1-(1+d/beta)^-alpha`: measured error
-#' up to ~112% in S at small beta, and it only reaches 1e-8 near beta ~ 1e6-1e7,
-#' so it is NOT used as an exact-model path here. WHY NOT a fixed dose cutoff:
-#' at large beta a fixed cutoff wrongly applies the asymptotic where dose << beta
-#' (error ~1e4); the switch must be regime-aware as above.
-#'
-#' Performance note (10k-bootstrap target): realistic fits have small/moderate
-#' beta, where large gec doses take the fast asymptotic (a few terms) and only
-#' small doses use the short Kummer series. The slow Kummer path (~1e5 terms) is
-#' reached only in the extreme large-beta / large-dose corner; a higher-order
-#' large-beta expansion could remove even that and is flagged as a future
-#' optimization (see EXACT_BETA_POISSON_IMPLEMENTATION_PLAN.md, Pinch Point 2/5).
+# Exact beta-Poisson dose-response (confluent hypergeometric) — prototype
+#
+# Response:  P(d) = 1 - M(alpha, alpha + beta, -d)
+# where M = 1F1 is Kummer's confluent hypergeometric function and (alpha, beta)
+# are the shape parameters of the Beta(alpha, beta) infectivity distribution
+# (single-hit theory). This file prototypes ONLY the numerically robust
+# evaluator + response function; package wiring (fit / effective_dose /
+# bootstrap / comparison) comes in later phases.
+#
+# We compute and return the SURVIVAL S = 1 - P directly, because the binomial
+# log-likelihood needs log(1 - P) = log(S) for non-responders, and S is the
+# hard-to-get tail at large dose. The response is 1 - S.
+#
+# VALIDATED NUMERICAL STRATEGY  (worst-case relative error in S = 2.3e-9 over
+# alpha in [0.05, 2], beta in [0.1, 1e5], dose in [1e-3, 1e5], vs mpmath at 50
+# digits; re-certify against Rmpfr in the package test suite):
+#
+#   route each dose element to exactly one method --
+#     * dose < 1e-4                          -> linear limit  S = 1 - d*alpha/(alpha+beta)
+#     * asymptotic ACCEPTED when ALL hold:   -> large-argument asymptotic
+#          dose >= alpha+beta                   (dose past the parameter scale)
+#          exp(-dose) < 1e-12                   (recessive ~e^-d term negligible; dose > ~28)
+#          2F0 truncation term < 1e-12          (algebraic asymptotic converged)
+#     * otherwise                            -> log-space Kummer series (always
+#                                               correct, never overflows)
+#
+# WHY NOT the legacy drfunc approximation `1-(1+d/beta)^-alpha`: measured error
+# up to ~112% in S at small beta, and it only reaches 1e-8 near beta ~ 1e6-1e7,
+# so it is NOT used as an exact-model path here. WHY NOT a fixed dose cutoff:
+# at large beta a fixed cutoff wrongly applies the asymptotic where dose << beta
+# (error ~1e4); the switch must be regime-aware as above.
+#
+# Performance note (10k-bootstrap target): realistic fits have small/moderate
+# beta, where large gec doses take the fast asymptotic (a few terms) and only
+# small doses use the short Kummer series. The slow Kummer path (~1e5 terms) is
+# reached only in the extreme large-beta / large-dose corner; a higher-order
+# large-beta expansion could remove even that and is flagged as a future
+# optimization (see EXACT_BETA_POISSON_IMPLEMENTATION_PLAN.md, Pinch Point 2/5).
 
 # ---- large-dose asymptotic, vectorized over dose; returns value + truncation --
 # M(a, a+b, -d) ~ Gamma(B)/Gamma(B-a) * d^-a * 2F0(a, a-B+1; ; 1/d),  B = a+b
@@ -88,6 +88,7 @@
 }
 
 #' Exact beta-Poisson survival S(dose) = 1 - P(dose), vectorized over dose.
+#' @export
 exact_beta_poisson_survival <- function(dose, alpha, beta) {
   stopifnot(all(is.finite(dose)), all(dose >= 0), alpha > 0, beta > 0)
   B <- alpha + beta
@@ -109,6 +110,7 @@ exact_beta_poisson_survival <- function(dose, alpha, beta) {
 #' Exact beta-Poisson response P(dose) = 1 - S(dose).
 #' Slots into models.R beside exponential_response / beta_poisson_response and
 #' is registered in model_probability(); parameters are (alpha, beta).
+#' @export
 exact_beta_poisson_response <- function(dose, alpha, beta) {
   1 - exact_beta_poisson_survival(dose, alpha, beta)
 }

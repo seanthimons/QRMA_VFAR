@@ -6,7 +6,7 @@
 \usage{
 fit_dose_response(
   data,
-  model = c("exponential", "beta_poisson"),
+  model = c("exponential", "beta_poisson", "exact_beta_poisson"),
   start = NULL,
   control = list(maxit = 2000, reltol = 1e-10)
 )

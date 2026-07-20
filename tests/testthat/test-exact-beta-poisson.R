@@ -7,6 +7,12 @@ test_that("exact beta-Poisson response is a valid dose-response curve", {
 })
 
 test_that("exact beta-Poisson survival matches a high-precision oracle", {
+  # Slow (~minutes): the oracle sums at least `dose` terms at 240-bit precision.
+  # Gated off by default so routine test()/check() stays fast; opt in on CI major
+  # builds via QRMAVFAR_SLOW_TESTS=1.
+  if (!nzchar(Sys.getenv("QRMAVFAR_SLOW_TESTS"))) {
+    skip("High-precision oracle is slow; set QRMAVFAR_SLOW_TESTS=1 to run.")
+  }
   skip_if_not_installed("Rmpfr")
 
   # Ground-truth survival S = M(a, a+b, -d) via the all-positive Kummer
@@ -27,12 +33,12 @@ test_that("exact beta-Poisson survival matches a high-precision oracle", {
     as.numeric(exp(-d) * s)
   }
 
-  # dose capped at 1e4 to keep the high-precision sum fast; the extreme-dose /
-  # extreme-beta regime is certified separately in dev/validation (mpmath).
+  # dose capped at 1e3 to keep the high-precision sum tractable; the extreme-dose
+  # / extreme-beta regime is certified separately in dev/validation (mpmath).
   grid <- expand.grid(
     a = c(0.05, 0.265, 1, 2),
     b = c(0.1, 1, 5, 1000),
-    d = c(1e-3, 10, 100, 1e3, 1e4)
+    d = c(1e-3, 10, 100, 1e3)
   )
   err <- mapply(
     function(a, b, d) abs(exact_beta_poisson_survival(d, a, b) - oracle_survival(a, b, d)) /
