@@ -2,7 +2,7 @@
 % Please edit documentation in R/fit.R
 \name{dose_trend_test}
 \alias{dose_trend_test}
-\title{Test for an increasing dose-response trend}
+\title{Pre-screen for an increasing dose-response trend}
 \usage{
 dose_trend_test(data, alpha = 0.05)
 }
@@ -17,5 +17,8 @@ significance level, and pass indicator.
 }
 \description{
 Performs a one-sided Cochran-Armitage-type trend test using log dose as the
-score, matching the trend gate in the original CAMRA workflow.
+score. This is a pre-screening step that confirms a monotonic increasing
+dose-response relationship (response rising with dose) before models are fit,
+mirroring the \code{Zca > 1.645} gate in the Weir CAMRA workflow. The test is
+directional by design: only an increasing trend passes.
 }

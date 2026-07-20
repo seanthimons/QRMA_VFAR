@@ -46,18 +46,28 @@ test_that("Ward diagnostics identify the beta-Poisson model", {
   expect_false(assessment$appropriate[assessment$model == "exponential"])
 })
 
-test_that("trend test reports a chi-squared equivalent without changing the pass rule", {
-  trend <- dose_trend_test(ward_fixture())
-  # chi-squared reporting columns are the two-sided Z^2 (1 df) form
-  expect_equal(trend$chi_square, trend$statistic^2)
-  expect_identical(trend$chi_square_df, 1L)
-  expect_equal(
-    trend$chi_square_p_value,
-    2 * stats::pnorm(abs(trend$statistic), lower.tail = FALSE)
-  )
-  # the one-sided normal decision is unchanged
-  expect_equal(trend$p_value, stats::pnorm(trend$statistic, lower.tail = FALSE))
-  expect_true(trend$passes)
+test_that("trend pre-screen is one-sided: only an increasing trend passes", {
+  # increasing response with dose -> passes (matches Weir Zca > 1.645 gate)
+  increasing <- as_dose_response(data.frame(
+    dose = c(1, 10, 100, 1000),
+    pos = c(0, 2, 5, 8),
+    neg = c(8, 6, 3, 0)
+  ))
+  up <- dose_trend_test(increasing)
+  expect_gt(up$statistic, 1.645)
+  expect_equal(up$p_value, stats::pnorm(up$statistic, lower.tail = FALSE))
+  expect_true(up$passes)
+
+  # the same data reversed (decreasing response) must NOT pass the pre-screen,
+  # even though its trend is equally strong in magnitude
+  decreasing <- as_dose_response(data.frame(
+    dose = c(1, 10, 100, 1000),
+    pos = c(8, 5, 2, 0),
+    neg = c(0, 3, 6, 8)
+  ))
+  down <- dose_trend_test(decreasing)
+  expect_lt(down$statistic, 0)
+  expect_false(down$passes)
 })
 
 test_that("chi-squared and information-criterion preferences remain distinct", {
