@@ -131,14 +131,31 @@ validate_dose_response_columns <- function(data) {
   invisible(data)
 }
 
-# Criteria evaluated on the aggregated dose groups (post dedup-by-dose), so the
-# minimum-N and nonzero-response requirements count distinct doses, not raw rows.
+# Fitting criteria evaluated on the aggregated dose groups (post dedup-by-dose):
+# at least three distinct doses (the minimum leaving one residual df for a
+# two-parameter fit) and more than one positive response in total (a response
+# signal that can identify the model). Both are hard errors so non-conforming
+# data is rejected before fitting, with a message explaining why.
 validate_dose_response_groups <- function(data) {
   if (nrow(data) < 3L) {
-    stop("At least three distinct dose groups are required.", call. = FALSE)
+    stop(
+      sprintf(
+        "Data do not meet fitting criteria: at least three distinct dose groups are required, but %d %s present. Three doses is the minimum for a testable two-parameter fit.",
+        nrow(data),
+        if (nrow(data) == 1L) "is" else "are"
+      ),
+      call. = FALSE
+    )
   }
-  if (sum(data$positive > 0) < 2L) {
-    stop("At least two dose groups must have a nonzero response.", call. = FALSE)
+  if (sum(data$positive) <= 1L) {
+    stop(
+      sprintf(
+        "Data do not meet fitting criteria: more than one positive response is required to identify a dose-response model, but only %d %s observed across all dose groups.",
+        sum(data$positive),
+        if (sum(data$positive) == 1L) "was" else "were"
+      ),
+      call. = FALSE
+    )
   }
   invisible(data)
 }

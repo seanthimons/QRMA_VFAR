@@ -27,7 +27,7 @@ MISMATCH (code does something methodologically different), MISSING (absent).
 
 | # | Verdict | Summary |
 |---|---------|---------|
-| 1 | PARTIAL | Quantal structure enforced; N≥3 counts raw rows not distinct doses; "more than one nonzero response" not checked at all. |
+| 1 | IMPLEMENTED | Quantal structure, ≥3 distinct dose groups, and >1 positive response total (reading B) enforced as hard errors with explanatory messages. |
 | 2 | IMPLEMENTED | Directional one-sided pre-screen (`Zca` on log dose) that reproduces the Weir gate exactly; see clarification below. |
 | 3 | IMPLEMENTED | Binomial MLE (`optim`/BFGS) + chi-squared deviance goodness-of-fit. |
 | 4 | IMPLEMENTED* | Percentile bootstrap CIs, 95% default, MLE refit per replicate. Caveats below. |
@@ -47,7 +47,9 @@ MISMATCH (code does something methodologically different), MISSING (absent).
    (`R/data.R:86-92`), so it counts raw input rows, not distinct dose groups —
    3 rows collapsing to 2 doses passes. (b) There is **no check** that more than
    one dose group has `positive > 0`; a single-responding-dose or all-zero
-   dataset validates clean.
+   dataset validates clean. **→ Resolved:** both gaps fixed in
+   `validate_dose_response_groups()` (see the DONE note below); the
+   nonzero-response rule uses reading B (>1 positive response in total).
 
 2. **Cochran-Armitage trend — IMPLEMENTED (requirement clarified).** The item's
    wording "evaluated by chi-squared" was a conflation. The stakeholder clarified
@@ -153,9 +155,16 @@ MISMATCH (code does something methodologically different), MISSING (absent).
 ### Remaining work, grouped
 
 - **Independent of the three-model decision — DONE (2026-07-20):**
-  - Item 1: `validate_dose_response_groups()` now enforces ≥3 distinct dose groups
-    (post-aggregation) and ≥2 groups with a nonzero response (`R/data.R`). Commit
-    `5776110`.
+  - Item 1: `validate_dose_response_groups()` enforces the fitting criteria on the
+    aggregated dose groups (`R/data.R`) as hard errors with explanatory console
+    messages: ≥3 distinct dose groups (the minimum leaving one residual df for a
+    two-parameter fit) and >1 positive response in total. The nonzero-response
+    rule uses **reading B** ("more than one positive response counted in total",
+    `sum(positive) > 1`) rather than reading A ("more than one *responding dose
+    group*"). Reading B matches the CAMRA reference, which fits experiments with a
+    single responding dose but multiple responders (e.g. Enterovirus 62, E. coli
+    39); reading A wrongly rejected them. Initial guard commit `5776110`; reading-B
+    correction after validating against the QMRA-wiki target.
   - Item 2: confirmed `dose_trend_test()` correctly implements the directional
     monotonic-increasing pre-screen (Weir `Zca > 1.645` gate). Sharpened the docs
     and added a directional test (increasing passes, decreasing does not). The
@@ -189,9 +198,10 @@ Multi-start runs only on the initial fit (no `start` supplied); bootstrap
 warm-starts pass an explicit `start`, so the 1k-10k refits are unaffected. See
 `README.md` (Fitting robustness) for the user-facing note.
 
-The two remaining reference misses (experiments 62 and 39) are the ones the
-item-1 nonzero-response screen rejects, pending the reading-A vs reading-B
-decision above. Pooled experiments diverge separately (see item 6).
+With the item-1 nonzero-response screen set to reading B, experiments 62 and 39
+(single responding dose, multiple responders) now fit, so **every fittable
+reference experiment runs with zero errors** and the preferred-model match is
+118/121 (98%). Pooled experiments diverge separately (see item 6).
 
 ## Current implementation notes
 
