@@ -88,6 +88,35 @@ test_that("trend pre-screen is one-sided: only an increasing trend passes", {
   expect_false(down$passes)
 })
 
+test_that("comparison generalizes to three models with the exponential baseline", {
+  ward <- ward_fixture()
+  fits <- list(
+    exponential = fit_dose_response(ward, "exponential"),
+    beta_poisson = fit_dose_response(ward, "beta_poisson"),
+    exact_beta_poisson = fit_dose_response(ward, "exact_beta_poisson")
+  )
+  cmp <- compare_dose_response_models(fits)
+
+  expect_equal(nrow(cmp), 3L)
+
+  # the exponential is the nested baseline: no self-test
+  exp_row <- cmp[cmp$model == "exponential", ]
+  expect_true(is.na(exp_row$chi_square_df))
+  expect_false(exp_row$significant_improvement)
+
+  # both 2-parameter beta-Poisson forms are tested against the exponential on 1 df
+  bp_rows <- cmp[cmp$model != "exponential", ]
+  expect_true(all(bp_rows$chi_square_df == 1))
+  expect_true(all(bp_rows$significant_improvement))
+
+  # exactly one preferred model; it is a beta-Poisson form and, among the
+  # non-nested 2-parameter models, the lowest-AIC one (the global AIC minimum)
+  preferred <- cmp$model[cmp$preferred]
+  expect_length(preferred, 1L)
+  expect_true(preferred %in% c("beta_poisson", "exact_beta_poisson"))
+  expect_identical(preferred, cmp$model[cmp$AIC == min(cmp$AIC)])
+})
+
 test_that("chi-squared and information-criterion preferences remain distinct", {
   fits <- fit_dose_response_models(ward_fixture())
   fits$exponential$deviance <- 10

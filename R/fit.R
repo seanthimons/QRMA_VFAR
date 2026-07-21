@@ -317,23 +317,29 @@ goodness_of_fit <- function(object, alpha = 0.05) {
 
 #' Compare fitted dose-response models
 #'
-#' Uses the original workflow's chi-squared deviance comparison to select
-#' `preferred`: the additional beta-Poisson parameter is retained when it
-#' significantly reduces deviance. AIC and BIC are also reported with separate
-#' preference indicators. Because the exponential model is a limiting case of
-#' beta-Poisson rather than a regular nested model, the chi-squared comparison
-#' should be interpreted as an approximation.
+#' Compares two or more fitted models. The single-hit exponential is the common
+#' nested sub-model, so each higher-parameter model is tested against it by the
+#' chi-squared deviance difference on the extra degrees of freedom. `preferred`
+#' is the lowest-AIC model among those that significantly improve on the
+#' exponential, or the exponential itself when none do. Models with equal
+#' parameter counts (approximate vs exact beta-Poisson) are not nested in each
+#' other and are separated only by AIC/BIC. Because the exponential is a limiting
+#' case rather than a regular nested model, the chi-squared comparison is an
+#' approximation. With exactly two models this reduces to the original
+#' simpler-vs-fuller deviance test.
 #'
-#' @param object A `qdr_model_set` or list of `qdr_fit` objects.
+#' @param object A `qdr_model_set` or list of two or more `qdr_fit` objects.
 #' @param alpha Significance level for the chi-squared deviance comparison.
 #'
-#' @return A tibble with one row per model, including logical preference flags,
-#'   a stable `selection` code, and a human-readable `conclusion`.
+#' @return A tibble with one row per model: fit metrics, AIC/BIC and their
+#'   deltas, the nested chi-squared test of each model against the exponential
+#'   baseline (`NA` on the baseline row), logical preference flags, a stable
+#'   `selection` code, and a human-readable `conclusion`.
 #' @export
 compare_dose_response_models <- function(object, alpha = 0.05) {
   fits <- as_fit_list(object)
-  if (length(fits) != 2L) {
-    stop("Exactly two fitted models are required for comparison.", call. = FALSE)
+  if (length(fits) < 2L) {
+    stop("At least two fitted models are required for comparison.", call. = FALSE)
   }
   if (!is.numeric(alpha) || length(alpha) != 1L || !is.finite(alpha) || alpha <= 0 || alpha >= 1) {
     stop("`alpha` must be one number between zero and one.", call. = FALSE)
@@ -350,37 +356,64 @@ compare_dose_response_models <- function(object, alpha = 0.05) {
       BIC = -2 * fit$log_lik + log(observations) * parameters
     )
   })
-  simpler <- which.min(result$parameters)
-  fuller <- which.max(result$parameters)
-  parameter_difference <- result$parameters[[fuller]] - result$parameters[[simpler]]
-  if (parameter_difference < 1L) {
-    stop("Compared models must have different numbers of parameters.", call. = FALSE)
+  if (anyDuplicated(result$model)) {
+    stop("Each model in a comparison must be a distinct model type.", call. = FALSE)
   }
-  difference <- max(result$deviance[[simpler]] - result$deviance[[fuller]], 0)
-  critical_value <- stats::qchisq(1 - alpha, df = parameter_difference)
-  p_value <- stats::pchisq(difference, df = parameter_difference, lower.tail = FALSE)
-  selected_model <- if (difference > critical_value) result$model[[fuller]] else result$model[[simpler]]
+
+  # The exponential is the common nested sub-model (unique fewest-parameter model
+  # and the limiting case of both beta-Poisson families). Each higher-parameter
+  # model is tested against it by the deviance difference on `parameters - 1` df.
+  # Equal-parameter models (approximate vs exact beta-Poisson) are not nested and
+  # are separated only by AIC/BIC. Without a unique baseline no nested test runs.
+  min_parameters <- min(result$parameters)
+  has_baseline <- sum(result$parameters == min_parameters) == 1L
+  baseline_deviance <- if (has_baseline) {
+    result$deviance[result$parameters == min_parameters]
+  } else {
+    NA_real_
+  }
+
+  nested <- has_baseline & result$parameters > min_parameters
+  parameter_difference <- ifelse(nested, result$parameters - min_parameters, NA_integer_)
+  deviance_difference <- ifelse(nested, pmax(baseline_deviance - result$deviance, 0), NA_real_)
+  chi_square_critical <- ifelse(nested, stats::qchisq(1 - alpha, df = parameter_difference), NA_real_)
+  chi_square_p_value <- ifelse(
+    nested,
+    stats::pchisq(deviance_difference, df = parameter_difference, lower.tail = FALSE),
+    NA_real_
+  )
+  significant_improvement <- nested & !is.na(deviance_difference) & deviance_difference > chi_square_critical
+
+  # Preferred: among models that significantly improve on the exponential
+  # baseline, the lowest-AIC one; otherwise the baseline (or, with no baseline,
+  # the lowest-AIC model). With two models this is exactly "the fuller model if
+  # its extra parameter significantly cuts deviance, else the simpler model".
+  candidates <- which(significant_improvement)
+  selected_model <- if (length(candidates) > 0L) {
+    result$model[candidates][which.min(result$AIC[candidates])]
+  } else if (has_baseline) {
+    result$model[result$parameters == min_parameters]
+  } else {
+    result$model[which.min(result$AIC)]
+  }
 
   result |>
     dplyr::mutate(
       delta_AIC = .data$AIC - min(.data$AIC),
       delta_BIC = .data$BIC - min(.data$BIC),
-      deviance_difference = difference,
+      deviance_difference = deviance_difference,
       chi_square_df = parameter_difference,
-      chi_square_critical = critical_value,
-      chi_square_p_value = p_value,
-      significant_improvement = difference > critical_value,
+      chi_square_critical = chi_square_critical,
+      chi_square_p_value = chi_square_p_value,
+      significant_improvement = significant_improvement,
       preferred = .data$model == selected_model,
       preferred_by_AIC = .data$AIC == min(.data$AIC),
       preferred_by_BIC = .data$BIC == min(.data$BIC),
       selection = ifelse(.data$preferred, "preferred", "not_preferred"),
       conclusion = ifelse(
         .data$preferred,
-        paste(vapply(.data$model, model_label, character(1)), "is preferred by the chi-squared deviance comparison."),
-        paste(
-          vapply(.data$model, model_label, character(1)),
-          "is not preferred by the chi-squared deviance comparison."
-        )
+        paste(vapply(.data$model, model_label, character(1)), "is the preferred model."),
+        paste(vapply(.data$model, model_label, character(1)), "is not the preferred model.")
       )
     ) |>
     dplyr::arrange(dplyr::desc(.data$preferred), .data$AIC)

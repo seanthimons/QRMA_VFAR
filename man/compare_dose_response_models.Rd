@@ -7,19 +7,25 @@
 compare_dose_response_models(object, alpha = 0.05)
 }
 \arguments{
-\item{object}{A \code{qdr_model_set} or list of \code{qdr_fit} objects.}
+\item{object}{A \code{qdr_model_set} or list of two or more \code{qdr_fit} objects.}
 
 \item{alpha}{Significance level for the chi-squared deviance comparison.}
 }
 \value{
-A tibble with one row per model, including logical preference flags,
-a stable \code{selection} code, and a human-readable \code{conclusion}.
+A tibble with one row per model: fit metrics, AIC/BIC and their
+deltas, the nested chi-squared test of each model against the exponential
+baseline (\code{NA} on the baseline row), logical preference flags, a stable
+\code{selection} code, and a human-readable \code{conclusion}.
 }
 \description{
-Uses the original workflow's chi-squared deviance comparison to select
-\code{preferred}: the additional beta-Poisson parameter is retained when it
-significantly reduces deviance. AIC and BIC are also reported with separate
-preference indicators. Because the exponential model is a limiting case of
-beta-Poisson rather than a regular nested model, the chi-squared comparison
-should be interpreted as an approximation.
+Compares two or more fitted models. The single-hit exponential is the common
+nested sub-model, so each higher-parameter model is tested against it by the
+chi-squared deviance difference on the extra degrees of freedom. \code{preferred}
+is the lowest-AIC model among those that significantly improve on the
+exponential, or the exponential itself when none do. Models with equal
+parameter counts (approximate vs exact beta-Poisson) are not nested in each
+other and are separated only by AIC/BIC. Because the exponential is a limiting
+case rather than a regular nested model, the chi-squared comparison is an
+approximation. With exactly two models this reduces to the original
+simpler-vs-fuller deviance test.
 }
