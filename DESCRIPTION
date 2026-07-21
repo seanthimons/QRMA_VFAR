@@ -1,0 +1,34 @@
+Package: qrmavfar
+Title: Mechanistic Dose-Response Models for Microbial Risk Assessment
+Version: 0.1.0
+Authors@R: c(
+    person("Sean", "Thimons", email = "thimons.sean@gmail.com", role = c("aut", "cre")),
+    person("Mark H.", "Weir", role = "ctb"),
+    person("Timothy A.", "Bartrand", role = "ctb")
+  )
+Description: Fits exponential and approximate beta-Poisson dose-response
+    models to grouped binomial microbial response data. Provides trend tests,
+    model diagnostics, bootstrap uncertainty estimates, effective doses, and
+    publication-ready dose-response plots.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 8.0.0
+Depends:
+    R (>= 4.1.0)
+Imports:
+    dplyr,
+    generics,
+    ggplot2,
+    purrr,
+    readr,
+    rlang,
+    stats,
+    tibble,
+    tidyr,
+    withr
+Suggests:
+    mirai (>= 2.5.0),
+    Rmpfr,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
