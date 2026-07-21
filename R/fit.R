@@ -56,8 +56,16 @@ fit_dose_response <- function(
   start = NULL,
   control = list(maxit = 2000, reltol = 1e-10)
 ) {
-  data <- as_dose_response(data)
   model <- match.arg(model)
+  fit <- fit_core(as_dose_response(data), model, start = start, control = control)
+  fit$call <- match.call()
+  fit
+}
+
+# Fit a pre-standardized, pre-validated dose-response tibble (one binomial row per
+# observation; rows are NOT re-aggregated). Split out of fit_dose_response so the
+# pooling code can fit a stacked multi-dataset frame without re-aggregating doses.
+fit_core <- function(data, model, start = NULL, control = list(maxit = 2000, reltol = 1e-10)) {
   parameter_names <- model_parameters(model)
   starts <- if (is.null(start)) {
     candidate_starts(data, model)
