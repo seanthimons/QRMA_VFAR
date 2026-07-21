@@ -1,16 +1,11 @@
-# History files
-.Rhistory
-.Rapp.history
-
-# Session Data files
-.RData
-.RDataTmp
-
-# User-specific files
-.Ruserdata
-
-# Example code in package build process
-*-Ex.R
+# Ignore every dot file and dot folder in the project root by default; the ones
+# that belong in the repository are opted back in below.
+/.*
+!/.beans
+!/.github
+!/.gitignore
+!/.Rbuildignore
+!/.Rprofile
 
 # Output files from R CMD build
 /*.tar.gz
@@ -18,31 +13,25 @@
 # Output files from R CMD check
 /*.Rcheck/
 
-# RStudio files
-.Rproj.user/
+# Example code in package build process
+*-Ex.R
 
-# produced vignettes
+# Produced vignettes
 vignettes/*.html
 vignettes/*.pdf
 
-# OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
-.httr-oauth
-
-# knitr and R markdown default cache directories
+# knitr and R Markdown cache directories
 *_cache/
 /cache/
 
-# Temporary files created by R markdown
+# Temporary files created by R Markdown
 *.utf8.md
 *.knit.md
-
-# R Environment Variables
-.Renviron
 
 # pkgdown site
 docs/
 
-# translation temp files
+# Translation temp files
 po/*~
 
 # RStudio Connect folder
