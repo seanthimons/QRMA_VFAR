@@ -10,9 +10,11 @@ test_that("Ward model estimates remain stable", {
   ward <- ward_fixture()
   fits <- fit_dose_response_models(ward)
 
-  expect_equal(unname(coef(fits$exponential)[["k"]]), 0.00108819, tolerance = 1e-6)
-  expect_equal(unname(coef(fits$beta_poisson)[["alpha"]]), 0.2650067, tolerance = 1e-5)
-  expect_equal(unname(coef(fits$beta_poisson)[["n50"]]), 5.597221, tolerance = 1e-5)
+  # tolerances allow for optimizer-path variation at the same MLE (multi-start
+  # keeps the best-likelihood seed, which can settle ~1e-5 from a single-start fit)
+  expect_equal(unname(coef(fits$exponential)[["k"]]), 0.00108819, tolerance = 1e-5)
+  expect_equal(unname(coef(fits$beta_poisson)[["alpha"]]), 0.2650067, tolerance = 1e-4)
+  expect_equal(unname(coef(fits$beta_poisson)[["n50"]]), 5.597221, tolerance = 1e-4)
   expect_equal(effective_dose(fits$beta_poisson, 0.5), coef(fits$beta_poisson)[["n50"]])
   expect_true(all(vapply(fits, function(fit) fit$convergence == 0L, logical(1))))
 })
@@ -44,6 +46,22 @@ test_that("Ward diagnostics identify the beta-Poisson model", {
   expect_identical(assessment$recommendation[assessment$model == "exponential"], "not_recommended")
   expect_true(assessment$appropriate[assessment$model == "beta_poisson"])
   expect_false(assessment$appropriate[assessment$model == "exponential"])
+})
+
+test_that("low-infectivity data fits without collapsing to a degenerate optimum", {
+  # responses appear only at the high-dose end (small k); the old geometric-mean
+  # dose start sent optim() to k ~ 0 with a deviance in the hundreds
+  low_inf <- as_dose_response(data.frame(
+    dose = 10^(0:7),
+    pos = c(0, 0, 0, 0, 0, 1, 3, 9),
+    neg = c(10, 10, 10, 10, 10, 9, 7, 1)
+  ))
+  fit <- fit_dose_response(low_inf, "exponential")
+  expect_true(fit$convergence == 0L)
+  expect_lt(fit$deviance, 15)
+  ed50 <- effective_dose(fit, 0.5)
+  expect_gt(ed50, 1e5)
+  expect_lt(ed50, 1e8)
 })
 
 test_that("trend pre-screen is one-sided: only an increasing trend passes", {

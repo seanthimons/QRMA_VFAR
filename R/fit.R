@@ -59,7 +59,11 @@ fit_dose_response <- function(
   data <- as_dose_response(data)
   model <- match.arg(model)
   parameter_names <- model_parameters(model)
-  start <- validate_start(start %||% default_start(data, model), parameter_names)
+  starts <- if (is.null(start)) {
+    candidate_starts(data, model)
+  } else {
+    list(validate_start(start, parameter_names))
+  }
 
   objective <- function(log_parameters) {
     coefficients <- stats::setNames(exp(log_parameters), parameter_names)
@@ -67,13 +71,30 @@ fit_dose_response <- function(
     -sum(stats::dbinom(data$positive, size = data$total, prob = probability, log = TRUE))
   }
 
-  optimization <- stats::optim(
-    par = log(start),
-    fn = objective,
-    method = "BFGS",
-    hessian = TRUE,
-    control = control
-  )
+  # Fit from each candidate start and keep the highest-likelihood result: a
+  # misspecified model's likelihood can have start-dependent local optima
+  # (e.g. an exponential fit to beta-Poisson-shaped data). A supplied `start` is
+  # used on its own, so warm-started bootstrap refits remain single-shot.
+  optimization <- NULL
+  for (seed in starts) {
+    candidate <- tryCatch(
+      stats::optim(par = log(seed), fn = objective, method = "BFGS", hessian = TRUE, control = control),
+      error = function(cnd) NULL
+    )
+    if (
+      !is.null(candidate) &&
+        is.finite(candidate$value) &&
+        (is.null(optimization) || candidate$value < optimization$value)
+    ) {
+      optimization <- candidate
+    }
+  }
+  if (is.null(optimization)) {
+    stop(
+      sprintf("The %s model could not be fit from any starting value.", model_label(model)),
+      call. = FALSE
+    )
+  }
   log_coefficients <- stats::setNames(optimization$par, parameter_names)
   coefficients <- exp(log_coefficients)
   fitted_probability <- clamp_probability(model_probability(model, data$dose, coefficients))
@@ -152,14 +173,56 @@ model_parameters <- function(model) {
   )
 }
 
-default_start <- function(data, model) {
+# Candidate starting values tried in turn when no `start` is supplied; the fit
+# keeps whichever converges to the highest likelihood. Multiple seeds are needed
+# because a single data-driven seed cannot avoid every start-dependent local
+# optimum across the QMRA-wiki dose-response set:
+#   - capped ID50 seed: anchors low-infectivity fits (responses only at the top
+#     doses) near their true tiny rate; the cap stops it saturating the max dose.
+#   - geometric-mean-dose seed: the historical default, robust for shallow data.
+#   - fixed k = exp(-5): the CAMRA reference's fixed exponential seed.
+candidate_starts <- function(data, model) {
+  parameter_names <- model_parameters(model)
   middle_dose <- exp(stats::median(log(data$dose)))
-  switch(
+  median_dose <- estimate_median_dose(data)
+  seeds <- switch(
     model,
-    exponential = c(k = log(2) / middle_dose),
-    beta_poisson = c(alpha = 1, n50 = middle_dose),
-    exact_beta_poisson = c(alpha = 0.5, beta = middle_dose / 3)
+    exponential = list(
+      c(k = min(log(2) / median_dose, 10 / max(data$dose))),
+      c(k = log(2) / middle_dose),
+      c(k = exp(-5))
+    ),
+    beta_poisson = list(
+      c(alpha = 1, n50 = middle_dose),
+      c(alpha = 0.3, n50 = median_dose),
+      c(alpha = 0.15, n50 = median_dose)
+    ),
+    exact_beta_poisson = list(
+      c(alpha = 0.5, beta = middle_dose / 3)
+    )
   )
+  lapply(seeds, validate_start, expected_names = parameter_names)
+}
+
+# Seed the optimizer with a data-driven ID50 (dose at ~50% response), found by
+# interpolating the observed response over log dose. A geometric-mean-dose seed
+# is many orders of magnitude off when responses concentrate at the high-dose
+# end (low-infectivity pathogens), which sends optim() into a degenerate flat
+# optimum; anchoring the start near the response transition avoids that.
+estimate_median_dose <- function(data) {
+  ordering <- order(data$dose)
+  dose <- data$dose[ordering]
+  response <- data$response[ordering]
+  if (all(response < 0.5)) {
+    return(max(dose))
+  }
+  crossing <- which(response >= 0.5)[1L]
+  if (crossing == 1L) {
+    return(dose[1L])
+  }
+  window <- c(crossing - 1L, crossing)
+  log_dose <- stats::approx(response[window], log(dose[window]), xout = 0.5)$y
+  exp(log_dose)
 }
 
 validate_start <- function(start, expected_names) {
