@@ -31,7 +31,7 @@ MISMATCH (code does something methodologically different), MISSING (absent).
 | 2 | IMPLEMENTED | Directional one-sided pre-screen (`Zca` on log dose) that reproduces the Weir gate exactly; see clarification below. |
 | 3 | IMPLEMENTED | Binomial MLE (`optim`/BFGS) + chi-squared deviance goodness-of-fit. |
 | 4 | IMPLEMENTED* | Percentile bootstrap CIs, 95% default, MLE refit per replicate. Caveats below. |
-| 5 | IMPLEMENTED | Δdeviance vs chi-squared; hard-wired to exactly two models. |
+| 5 | IMPLEMENTED | Δdeviance vs chi-squared, generalized to N models (exponential as the nested baseline; AIC tiebreak among non-nested equal-parameter models). |
 | 6 | MISSING (by design) | No pooling; item states this is done manually / out of scope. |
 | 7 | IMPLEMENTED | Residual deviance vs saturated base case, `qchisq(df_residual)`. |
 | 8 | IMPLEMENTED | Deviances + chi-squared p-values surfaced as tibble columns. |
@@ -173,9 +173,23 @@ MISMATCH (code does something methodologically different), MISSING (absent).
   - Item 4: dedicated `test-bootstrap-confint.R` covering percentile bounds,
     level widening, converged-only filtering, and input validation. Commit
     `8f60fb0`.
-- **Gated on the three-model / Pinch Point 7 owner decision** (do not auto-decide):
-  - Items 5, 9, 10: extend comparison / plotting / best-model selection to include
-    the exact beta-Poisson as a third, non-nested, 2-parameter model.
+- **Pinch Point 7 decided (2026-07-20): full N-model generalization.**
+  - Item 5 — DONE. `compare_dose_response_models()` now accepts two or more fits.
+    The exponential is the common nested sub-model: each higher-parameter model is
+    tested against it by the deviance difference on `parameters - 1` df; `preferred`
+    is the lowest-AIC model among those that significantly beat the exponential
+    (else the exponential). Equal-parameter, non-nested models (approximate vs
+    exact beta-Poisson) are separated by AIC/BIC only. With exactly two models the
+    output reduces to the previous simpler-vs-fuller test (existing tests
+    unchanged). `consensus_model_decision()` already handled N models and works on
+    a three-model set as-is (verified: Ward selects the exact beta-Poisson
+    unanimously). A three-model comparison test was added.
+  - Items 9, 10 — still open. #9: `bootstrap_prediction_matrix()` /
+    `autoplot.qdr_bootstrap()` hardcode the approximate-BP `n50` algebra, so exact
+    model CI bands and parameter plots still break. #10: `fit_dose_response_models()`
+    and `analyze_dose_response()` still fit only the two legacy models, so the exact
+    model must be compared by hand-assembling a fit list until the default workflow
+    is extended (and `build_model_assessment()` should be exercised on three models).
 
 ### Reference validation and the multi-start fitting pivot (2026-07-20)
 
