@@ -331,10 +331,12 @@ goodness_of_fit <- function(object, alpha = 0.05) {
 #' @param object A `qdr_model_set` or list of two or more `qdr_fit` objects.
 #' @param alpha Significance level for the chi-squared deviance comparison.
 #'
-#' @return A tibble with one row per model: fit metrics, AIC/BIC and their
-#'   deltas, the nested chi-squared test of each model against the exponential
-#'   baseline (`NA` on the baseline row), logical preference flags, a stable
-#'   `selection` code, and a human-readable `conclusion`.
+#' @return A tibble with one row per model: fit metrics, a `converged` flag,
+#'   AIC/BIC and their deltas, the nested chi-squared test of each model against
+#'   the exponential baseline (`NA` on the baseline row), logical preference
+#'   flags, a stable `selection` code, and a human-readable `conclusion`. A
+#'   warning is issued when any compared model did not converge, since a poorly
+#'   converged richer model can make a simpler model appear preferred by default.
 #' @export
 compare_dose_response_models <- function(object, alpha = 0.05) {
   fits <- as_fit_list(object)
@@ -350,6 +352,7 @@ compare_dose_response_models <- function(object, alpha = 0.05) {
     tibble::tibble(
       model = fit$model,
       parameters = parameters,
+      converged = fit$convergence == 0L,
       log_lik = fit$log_lik,
       deviance = fit$deviance,
       AIC = -2 * fit$log_lik + 2 * parameters,
@@ -358,6 +361,19 @@ compare_dose_response_models <- function(object, alpha = 0.05) {
   })
   if (anyDuplicated(result$model)) {
     stop("Each model in a comparison must be a distinct model type.", call. = FALSE)
+  }
+  # A model that only reached a poor local optimum can make a simpler model look
+  # preferred by default. Surface it (the `converged` column carries the flag per
+  # model) so an "exponential preferred" result is not silently trusted when a
+  # richer model failed to converge rather than genuinely failing to improve.
+  if (!all(result$converged)) {
+    warning(
+      sprintf(
+        "These models did not converge; the comparison may be unreliable: %s.",
+        paste(vapply(result$model[!result$converged], model_label, character(1)), collapse = ", ")
+      ),
+      call. = FALSE
+    )
   }
 
   # The exponential is the common nested sub-model (unique fewest-parameter model

@@ -12,10 +12,12 @@ compare_dose_response_models(object, alpha = 0.05)
 \item{alpha}{Significance level for the chi-squared deviance comparison.}
 }
 \value{
-A tibble with one row per model: fit metrics, AIC/BIC and their
-deltas, the nested chi-squared test of each model against the exponential
-baseline (\code{NA} on the baseline row), logical preference flags, a stable
-\code{selection} code, and a human-readable \code{conclusion}.
+A tibble with one row per model: fit metrics, a \code{converged} flag,
+AIC/BIC and their deltas, the nested chi-squared test of each model against
+the exponential baseline (\code{NA} on the baseline row), logical preference
+flags, a stable \code{selection} code, and a human-readable \code{conclusion}. A
+warning is issued when any compared model did not converge, since a poorly
+converged richer model can make a simpler model appear preferred by default.
 }
 \description{
 Compares two or more fitted models. The single-hit exponential is the common
