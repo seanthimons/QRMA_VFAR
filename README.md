@@ -50,6 +50,26 @@ this multi-start strategy reproduces the CAMRA reference fits far more reliably
 than a single fixed start. Supplying `start` explicitly (as the bootstrap
 warm-start does) uses that value alone, so bootstrap performance is unaffected.
 
+### Pooling multiple datasets
+
+When several trials exist for one pathogen, `poolability_test()` runs the Haas
+likelihood-ratio test to decide whether they can be combined: it fits each
+dataset separately and the stacked combination, then compares the deviance
+difference to a chi-squared distribution (per model). Datasets that pool
+significantly worse than when fit separately are kept distinct.
+`group_datasets()` extends this to find which trials are mutually poolable.
+
+```r
+trials <- list(trial_a = data_a, trial_b = data_b, trial_c = data_c)
+
+poolability_test(trials) # are they poolable? (one row per model)
+group_datasets(trials)   # which trials group together (per model)
+```
+
+Datasets are combined by **stacking** — each trial's dose groups are kept as
+separate binomial observations, so repeated doses across trials are preserved
+(matching the QMRA-wiki pooled-experiment convention), rather than summed.
+
 Development notes and owner-requested workflow follow-ups live in [TODO.md](TODO.md).
 
 Boosterpak remains optional repository-development tooling. It is not a package

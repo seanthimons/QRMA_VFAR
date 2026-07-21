@@ -32,7 +32,7 @@ MISMATCH (code does something methodologically different), MISSING (absent).
 | 3 | IMPLEMENTED | Binomial MLE (`optim`/BFGS) + chi-squared deviance goodness-of-fit. |
 | 4 | IMPLEMENTED* | Percentile bootstrap CIs, 95% default, MLE refit per replicate. Caveats below. |
 | 5 | IMPLEMENTED | Δdeviance vs chi-squared, generalized to N models (exponential as the nested baseline; AIC tiebreak among non-nested equal-parameter models). |
-| 6 | MISSING (by design) | No pooling; item states this is done manually / out of scope. |
+| 6 | IMPLEMENTED | `poolability_test()` (Haas likelihood-ratio test) + `group_datasets()` (subset grouping); datasets combined by stacking. |
 | 7 | IMPLEMENTED | Residual deviance vs saturated base case, `qchisq(df_residual)`. |
 | 8 | IMPLEMENTED | Deviances + chi-squared p-values surfaced as tibble columns. |
 | 9 | IMPLEMENTED | Plotting is model-generic (routes through `model_probability` / `model_parameters`); exact-model CI bands and parameter plots work. |
@@ -94,22 +94,25 @@ MISMATCH (code does something methodologically different), MISSING (absent).
    exact beta-Poisson third model cannot enter — see the three-model decision
    note below.
 
-6. **Pooling — MISSING by design (deferred).** No pooling / multi-dataset
-   aggregation / pooled-vs-unpooled comparison anywhere in `R/`. The only
-   "combining" is `as_dose_response()` deduplicating rows at the same dose within
-   one dataset (`R/data.R:86-92`). The item itself states pooling is done manually
-   by analysts, so the absence is consistent, not a defect.
+6. **Pooling — IMPLEMENTED.** `R/pooling.R` adds `poolability_test()` and
+   `group_datasets()`. Pooling in QMRA is a *poolability decision* (Haas, Rose &
+   Gerba): given multiple trials for a pathogen, test whether they are
+   statistically the same before combining. `poolability_test(datasets, models,
+   alpha)` fits each dataset separately and the **stacked** combination, then
+   compares `deviance_pooled - sum(deviance_individual)` to a chi-squared on
+   `k*(m-1)` df, per model. `group_datasets()` extends this to find which trials
+   are mutually poolable (greedy agglomerative by default; exhaustive set-partition
+   search for small `m`). Datasets are combined by **stacking** (each trial's dose
+   groups kept as separate binomial observations), enabled by splitting
+   `fit_core()` out of `fit_dose_response()` so the stacked frame is fit without
+   the `as_dose_response()` sum-aggregation.
 
-   **Validation observation (2026-07-20, deferred):** the QMRA-wiki Excel target
-   contains ~22 pre-pooled experiments (comma-separated ids, e.g. `253, 254`).
-   Feeding their rows through `as_dose_response()` *aggregates* repeated doses
-   (sums the counts), whereas the reference pooled fits keep each sub-study's row
-   as a separate binomial observation. That changes the saturated model, the
-   residual dof, and the deviance — e.g. `253, 254` has 7 rows collapsing to 4
-   distinct doses, deviance 3.05 vs the target's 8.85. This is the expected
-   consequence of not having a pooling feature; reproducing the pooled targets
-   would require stacking rather than aggregating same-dose rows. Left for the
-   future pooling work, not a fit-correctness bug.
+   This resolves the earlier aggregate-vs-stack divergence: the QMRA-wiki pooled
+   experiment `253, 254` now yields the reference **stacked** exponential deviance
+   ~8.85 (verified in `tests/testthat/test-pooling.R`), not the aggregated 3.05.
+   The poolability LRT is textbook-grounded; the subset-grouping heuristic is a
+   documented convenience (not a theorem). Single-dataset `as_dose_response()`
+   still aggregates same-dose rows — that within-dataset behavior is unchanged.
 
 7. **Sufficient fit vs base case — IMPLEMENTED.** The base case is the saturated
    model: `saturated_log_lik` (`R/fit.R:78-83`), `deviance = 2*(saturated_log_lik
@@ -223,7 +226,8 @@ warm-starts pass an explicit `start`, so the 1k-10k refits are unaffected. See
 With the item-1 nonzero-response screen set to reading B, experiments 62 and 39
 (single responding dose, multiple responders) now fit, so **every fittable
 reference experiment runs with zero errors** and the preferred-model match is
-118/121 (98%). Pooled experiments diverge separately (see item 6).
+118/121 (98%). Pooled experiments are handled by the stacking-based pooling
+feature (see item 6), which reproduces their reference stacked deviances.
 
 ## Current implementation notes
 
