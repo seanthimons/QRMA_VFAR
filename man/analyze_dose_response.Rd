@@ -6,7 +6,9 @@
 \usage{
 analyze_dose_response(
   data,
+  models = c("exponential", "beta_poisson"),
   bootstrap_times = 1000L,
+  exact_bootstrap_times = 10000L,
   resample = c("observed", "fitted"),
   seed = NULL,
   backend = c("sequential", "mirai"),
@@ -18,8 +20,18 @@ analyze_dose_response(
 \arguments{
 \item{data}{Grouped dose-response data accepted by \code{\link[=as_dose_response]{as_dose_response()}}.}
 
-\item{bootstrap_times}{Number of bootstrap replicates per model. Use zero to
-skip bootstrapping.}
+\item{models}{Character vector of models to fit and compare, a subset of
+\code{"exponential"}, \code{"beta_poisson"}, and \code{"exact_beta_poisson"}. Defaults to
+the exponential and approximate beta-Poisson models; add
+\code{"exact_beta_poisson"} to include the exact model.}
+
+\item{bootstrap_times}{Number of bootstrap replicates for the exponential and
+approximate beta-Poisson models. Use zero to skip their bootstrapping.}
+
+\item{exact_bootstrap_times}{Number of bootstrap replicates for the exact
+beta-Poisson model, which is roughly an order of magnitude slower to fit.
+Only used when \code{"exact_beta_poisson"} is in \code{models}; use zero to fit and
+compare the exact model without bootstrapping it.}
 
 \item{resample}{Bootstrap method passed to \code{\link[=bootstrap_dose_response]{bootstrap_dose_response()}}.}
 
@@ -40,6 +52,6 @@ model fits, diagnostics, parsed assessment, comparison, and bootstrap
 results.
 }
 \description{
-Standardizes the input, evaluates its trend, fits both supported models,
+Standardizes the input, evaluates its trend, fits the requested models,
 compares their fit, and optionally bootstraps uncertainty.
 }

@@ -140,28 +140,46 @@ fit_dose_response <- function(
   fit
 }
 
-#' Fit both supported dose-response models
+#' Fit a set of dose-response models
 #'
+#' @param models Character vector of models to fit, a subset of
+#'   `"exponential"`, `"beta_poisson"`, and `"exact_beta_poisson"`. Defaults to
+#'   the exponential and approximate beta-Poisson models; add
+#'   `"exact_beta_poisson"` to include the exact model.
 #' @param check_trend If `TRUE`, warn when the increasing trend test does not
 #'   pass at `alpha`.
-#' @inheritParams fit_dose_response
 #' @inheritParams dose_trend_test
 #'
-#' @return A named `qdr_model_set` containing both fits, with the trend result
-#'   stored in the `trend` attribute.
+#' @return A named `qdr_model_set` containing one fit per requested model, with
+#'   the trend result stored in the `trend` attribute.
 #' @export
-fit_dose_response_models <- function(data, check_trend = TRUE, alpha = 0.05) {
+fit_dose_response_models <- function(
+  data,
+  models = c("exponential", "beta_poisson"),
+  check_trend = TRUE,
+  alpha = 0.05
+) {
   data <- as_dose_response(data)
+  models <- validate_model_set(models)
   trend <- dose_trend_test(data, alpha = alpha)
   if (check_trend && !trend$passes) {
     warning("No statistically significant increasing dose-response trend was detected.", call. = FALSE)
   }
 
-  fits <- list(
-    exponential = fit_dose_response(data, "exponential"),
-    beta_poisson = fit_dose_response(data, "beta_poisson")
-  )
+  fits <- stats::setNames(lapply(models, function(model) fit_dose_response(data, model)), models)
   structure(fits, class = c("qdr_model_set", "list"), trend = trend, data = data)
+}
+
+validate_model_set <- function(models) {
+  valid <- c("exponential", "beta_poisson", "exact_beta_poisson")
+  models <- unique(models)
+  if (!is.character(models) || length(models) < 1L || !all(models %in% valid)) {
+    stop(
+      sprintf("`models` must be a non-empty subset of: %s.", paste(valid, collapse = ", ")),
+      call. = FALSE
+    )
+  }
+  models
 }
 
 model_parameters <- function(model) {

@@ -17,6 +17,27 @@ The package provides:
 - percentile parameter intervals and pointwise confidence curves; and
 - `ggplot2` model and bootstrap plots.
 
+### Exact beta-Poisson model (opt-in)
+
+By default the workflow fits the exponential and approximate beta-Poisson
+models. The **exact** beta-Poisson model (confluent hypergeometric form,
+parameterized in `alpha`/`beta`) is available as a deliberate opt-in via the
+`models` argument. It participates fully in fitting, the N-model comparison,
+assessment, consensus, and plotting. Because it is roughly an order of magnitude
+slower to fit, its bootstrap replicate count is controlled separately
+(`exact_bootstrap_times`, default 10000; set to zero to fit and compare it
+without bootstrapping):
+
+```r
+analysis <- analyze_dose_response(
+  ward,
+  models = c("exponential", "beta_poisson", "exact_beta_poisson"),
+  bootstrap_times = 1000,        # exponential + approximate beta-Poisson
+  exact_bootstrap_times = 10000, # exact beta-Poisson (slower); 0 to skip
+  seed = 2026
+)
+```
+
 ### Fitting robustness (multi-start)
 
 When no starting values are supplied, `fit_dose_response()` fits the model from

@@ -35,8 +35,8 @@ MISMATCH (code does something methodologically different), MISSING (absent).
 | 6 | MISSING (by design) | No pooling; item states this is done manually / out of scope. |
 | 7 | IMPLEMENTED | Residual deviance vs saturated base case, `qchisq(df_residual)`. |
 | 8 | IMPLEMENTED | Deviances + chi-squared p-values surfaced as tibble columns. |
-| 9 | PARTIAL | Exponential + approximate BP fully plotted; exact model's CI bands and bootstrap-parameter plot break. |
-| 10 | IMPLEMENTED* | `recommendation` label + chi-squared-driven `preferred`; two-model only. |
+| 9 | IMPLEMENTED | Plotting is model-generic (routes through `model_probability` / `model_parameters`); exact-model CI bands and parameter plots work. |
+| 10 | IMPLEMENTED | Best-model choice across all requested models; exact model opt-in via `models`, fit / compared / assessed / plotted, with a separate exact bootstrap budget. |
 
 ### Detail and evidence
 
@@ -184,12 +184,20 @@ MISMATCH (code does something methodologically different), MISSING (absent).
     unchanged). `consensus_model_decision()` already handled N models and works on
     a three-model set as-is (verified: Ward selects the exact beta-Poisson
     unanimously). A three-model comparison test was added.
-  - Items 9, 10 — still open. #9: `bootstrap_prediction_matrix()` /
-    `autoplot.qdr_bootstrap()` hardcode the approximate-BP `n50` algebra, so exact
-    model CI bands and parameter plots still break. #10: `fit_dose_response_models()`
-    and `analyze_dose_response()` still fit only the two legacy models, so the exact
-    model must be compared by hand-assembling a fit list until the default workflow
-    is extended (and `build_model_assessment()` should be exercised on three models).
+  - Item 10 — DONE. `fit_dose_response_models()` and `analyze_dose_response()` gained
+    a `models` argument (default the two legacy models; add `"exact_beta_poisson"`
+    to opt in). All requested models flow through fitting, the N-model comparison,
+    `build_model_assessment()` (verified on three models), consensus, and plotting.
+    The exact model's bootstrap is budgeted separately via `exact_bootstrap_times`
+    (default 10000; zero to fit and compare it without bootstrapping) since it is
+    ~6x slower to fit. Default (two-model) behavior and output shape are unchanged.
+  - Item 9 — DONE. `bootstrap_prediction_matrix()` now reconstructs each bootstrap
+    curve through `model_probability()`, and `autoplot.qdr_bootstrap()` drives its
+    parameter plot off `model_parameters()`, so both are model-generic — the exact
+    model's CI bands and `(alpha, beta)` parameter scatter plot correctly. No
+    per-model plotting branches remain. (Optimization note: the exact model's band
+    reconstruction evaluates the Kummer series per draw; revisit if 10k-replicate
+    band plots prove slow.)
 
 ### Reference validation and the multi-start fitting pivot (2026-07-20)
 

@@ -57,16 +57,19 @@ prediction_curve <- function(
   })
 }
 
+# Reconstruct the response curve for every bootstrap draw. Delegates to
+# model_probability() (the same dispatch fitting uses), so it is correct for any
+# registered model -- exponential, approximate and exact beta-Poisson -- with no
+# per-model algebra. Returns a draws x dose matrix.
 bootstrap_prediction_matrix <- function(model, estimates, dose) {
-  if (model == "exponential") {
-    return(-expm1(-outer(estimates$k, dose, "*")))
-  }
-  log_ratio <- outer(
-    -log(estimates$n50) + log_expm1(log(2) / estimates$alpha),
-    log(dose),
-    "+"
+  parameter_names <- model_parameters(model)
+  draws <- as.matrix(estimates[, parameter_names, drop = FALSE])
+  predictions <- vapply(
+    seq_len(nrow(draws)),
+    function(i) model_probability(model, dose, stats::setNames(draws[i, ], parameter_names)),
+    numeric(length(dose))
   )
-  -expm1(-estimates$alpha * log1pexp(log_ratio))
+  t(predictions)
 }
 
 validate_curve_arguments <- function(points, dose_range) {
@@ -149,20 +152,22 @@ autoplot.qdr_bootstrap <- function(object, ...) {
   fit <- attr(object, "fit")
   data <- tibble::as_tibble(object) |>
     dplyr::filter(.data$converged)
-  if (fit$model == "exponential") {
+  parameter_names <- model_parameters(fit$model)
+  title <- paste(model_label(fit$model), "parameter uncertainty")
+  if (length(parameter_names) == 1L) {
     return(
-      ggplot2::ggplot(data, ggplot2::aes(x = .data$k)) +
+      ggplot2::ggplot(data, ggplot2::aes(x = .data[[parameter_names[[1L]]]])) +
         ggplot2::geom_histogram(bins = 30, color = "white", fill = "#287D8E") +
-        ggplot2::labs(x = "k", y = "Bootstrap replicates", title = "Exponential parameter uncertainty") +
+        ggplot2::labs(x = parameter_names[[1L]], y = "Bootstrap replicates", title = title) +
         ggplot2::theme_minimal(base_size = 11)
     )
   }
 
-  ggplot2::ggplot(data, ggplot2::aes(x = .data$alpha, y = .data$n50)) +
+  ggplot2::ggplot(data, ggplot2::aes(x = .data[[parameter_names[[1L]]]], y = .data[[parameter_names[[2L]]]])) +
     ggplot2::geom_point(alpha = 0.45, color = "#B13C2E") +
     ggplot2::scale_x_log10() +
     ggplot2::scale_y_log10() +
-    ggplot2::labs(x = "alpha", y = "N50", title = "Beta-Poisson parameter uncertainty") +
+    ggplot2::labs(x = parameter_names[[1L]], y = parameter_names[[2L]], title = title) +
     ggplot2::theme_minimal(base_size = 11)
 }
 
