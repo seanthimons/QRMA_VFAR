@@ -92,11 +92,22 @@ MISMATCH (code does something methodologically different), MISSING (absent).
    exact beta-Poisson third model cannot enter — see the three-model decision
    note below.
 
-6. **Pooling — MISSING by design.** No pooling / multi-dataset aggregation /
-   pooled-vs-unpooled comparison anywhere in `R/`. The only "combining" is
-   `as_dose_response()` deduplicating rows at the same dose within one dataset
-   (`R/data.R:86-92`). The item itself states pooling is done manually by
-   analysts, so the absence is consistent, not a defect.
+6. **Pooling — MISSING by design (deferred).** No pooling / multi-dataset
+   aggregation / pooled-vs-unpooled comparison anywhere in `R/`. The only
+   "combining" is `as_dose_response()` deduplicating rows at the same dose within
+   one dataset (`R/data.R:86-92`). The item itself states pooling is done manually
+   by analysts, so the absence is consistent, not a defect.
+
+   **Validation observation (2026-07-20, deferred):** the QMRA-wiki Excel target
+   contains ~22 pre-pooled experiments (comma-separated ids, e.g. `253, 254`).
+   Feeding their rows through `as_dose_response()` *aggregates* repeated doses
+   (sums the counts), whereas the reference pooled fits keep each sub-study's row
+   as a separate binomial observation. That changes the saturated model, the
+   residual dof, and the deviance — e.g. `253, 254` has 7 rows collapsing to 4
+   distinct doses, deviance 3.05 vs the target's 8.85. This is the expected
+   consequence of not having a pooling feature; reproducing the pooled targets
+   would require stacking rather than aggregating same-dose rows. Left for the
+   future pooling work, not a fit-correctness bug.
 
 7. **Sufficient fit vs base case — IMPLEMENTED.** The base case is the saturated
    model: `saturated_log_lik` (`R/fit.R:78-83`), `deviance = 2*(saturated_log_lik
@@ -156,6 +167,31 @@ MISMATCH (code does something methodologically different), MISSING (absent).
 - **Gated on the three-model / Pinch Point 7 owner decision** (do not auto-decide):
   - Items 5, 9, 10: extend comparison / plotting / best-model selection to include
     the exact beta-Poisson as a third, non-nested, 2-parameter model.
+
+### Reference validation and the multi-start fitting pivot (2026-07-20)
+
+The two-model outputs were validated against the QMRA-wiki Excel target
+(`data/raw/QMRA wiki data_v3_Camila.xlsx`, ~120 fittable single-experiment
+datasets). The fit / goodness-of-fit / comparison arithmetic reproduces the
+reference; the divergences traced to optimizer start values, not formulas.
+
+**Design pivot (documented so end users are not surprised):** the single
+geometric-mean-dose `default_start()` was replaced by `candidate_starts()` plus a
+multi-start loop in `fit_dose_response()`. A single seed cannot avoid every
+start-dependent local optimum — an exponential fit to beta-Poisson-shaped data
+(Ward) falls into a spurious saturated optimum, while a low-infectivity pathogen
+(e.g. Coxiella, true k ~ 5.7e-11) collapses to k -> 0. Fitting from several seeds
+(capped ID50, geometric-mean dose, and the CAMRA fixed `exp(-5)`) and keeping the
+highest-likelihood result resolves both. Result on the reference set:
+preferred-model match 96% -> 97%, ID50 within 3% 92 -> 114 / 119, beta-Poisson
+deviance matches 81 -> 100, and all six tiny-rate fit crashes eliminated.
+Multi-start runs only on the initial fit (no `start` supplied); bootstrap
+warm-starts pass an explicit `start`, so the 1k-10k refits are unaffected. See
+`README.md` (Fitting robustness) for the user-facing note.
+
+The two remaining reference misses (experiments 62 and 39) are the ones the
+item-1 nonzero-response screen rejects, pending the reading-A vs reading-B
+decision above. Pooled experiments diverge separately (see item 6).
 
 ## Current implementation notes
 
