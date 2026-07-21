@@ -149,8 +149,8 @@ MISMATCH (code does something methodologically different), MISSING (absent).
 ### Corrections to the planning docs
 
 - `consensus_model_decision()` is **present and exported** (`R/assessment.R:111-182`,
-  `NAMESPACE`). The implementation plan and `HANDOFF.md` claim it was "missing from
-  the working tree" — that claim is stale; the function is in the working source.
+  `NAMESPACE`). Earlier planning notes claimed it was "missing from the working
+  tree" — that claim is stale; the function is in the working source.
 - The exact beta-Poisson model **exists and is wired into fitting, `effective_dose`,
   and bootstrap** (as of the Phase 3 commit), but is opt-in and absent from the
   "Current implementation notes" below.
