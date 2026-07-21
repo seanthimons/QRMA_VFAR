@@ -2,12 +2,22 @@
 % Please edit documentation in R/fit.R
 \name{fit_dose_response_models}
 \alias{fit_dose_response_models}
-\title{Fit both supported dose-response models}
+\title{Fit a set of dose-response models}
 \usage{
-fit_dose_response_models(data, check_trend = TRUE, alpha = 0.05)
+fit_dose_response_models(
+  data,
+  models = c("exponential", "beta_poisson"),
+  check_trend = TRUE,
+  alpha = 0.05
+)
 }
 \arguments{
 \item{data}{Grouped dose-response data accepted by \code{\link[=as_dose_response]{as_dose_response()}}.}
+
+\item{models}{Character vector of models to fit, a subset of
+\code{"exponential"}, \code{"beta_poisson"}, and \code{"exact_beta_poisson"}. Defaults to
+the exponential and approximate beta-Poisson models; add
+\code{"exact_beta_poisson"} to include the exact model.}
 
 \item{check_trend}{If \code{TRUE}, warn when the increasing trend test does not
 pass at \code{alpha}.}
@@ -15,9 +25,9 @@ pass at \code{alpha}.}
 \item{alpha}{Significance level used for the \code{passes} indicator.}
 }
 \value{
-A named \code{qdr_model_set} containing both fits, with the trend result
-stored in the \code{trend} attribute.
+A named \code{qdr_model_set} containing one fit per requested model, with
+the trend result stored in the \code{trend} attribute.
 }
 \description{
-Fit both supported dose-response models
+Fit a set of dose-response models
 }

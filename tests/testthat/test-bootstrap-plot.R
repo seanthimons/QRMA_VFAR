@@ -61,3 +61,51 @@ test_that("the complete analysis workflow returns plot-ready results", {
   expect_s3_class(analysis_plot, "ggplot")
   expect_no_error(ggplot2::ggplot_build(analysis_plot))
 })
+
+test_that("prediction curve builds bootstrap bands for the exact model", {
+  fit <- fit_dose_response(ward_fixture(), "exact_beta_poisson")
+  boot <- bootstrap_dose_response(fit, times = 15, seed = 3)
+  curve <- prediction_curve(fit, boot, points = 10)
+
+  expect_true(all(curve$lower <= curve$upper))
+  expect_true(all(is.finite(curve$estimate)))
+  exact_plot <- ggplot2::autoplot(boot)
+  expect_s3_class(exact_plot, "ggplot")
+  expect_no_error(ggplot2::ggplot_build(exact_plot))
+})
+
+test_that("three-model analysis fits, bootstraps, and plots the exact model", {
+  analysis <- analyze_dose_response(
+    ward_fixture(),
+    models = c("exponential", "beta_poisson", "exact_beta_poisson"),
+    bootstrap_times = 12,
+    exact_bootstrap_times = 12,
+    seed = 2026
+  )
+
+  expect_named(analysis$fits, c("exponential", "beta_poisson", "exact_beta_poisson"))
+  expect_named(analysis$bootstraps, c("exponential", "beta_poisson", "exact_beta_poisson"))
+  expect_equal(nrow(analysis$assessment), 3L)
+  analysis_plot <- ggplot2::autoplot(analysis, points = 20)
+  expect_s3_class(analysis_plot, "ggplot")
+  expect_no_error(ggplot2::ggplot_build(analysis_plot))
+})
+
+test_that("the exact model is fit and compared without bootstrapping when opted out", {
+  analysis <- analyze_dose_response(
+    ward_fixture(),
+    models = c("exponential", "beta_poisson", "exact_beta_poisson"),
+    bootstrap_times = 8,
+    exact_bootstrap_times = 0,
+    seed = 1
+  )
+
+  expect_true("exact_beta_poisson" %in% analysis$comparison$model)
+  expect_named(analysis$bootstraps, c("exponential", "beta_poisson"))
+})
+
+test_that("model set and bootstrap counts are validated", {
+  expect_error(fit_dose_response_models(ward_fixture(), models = "nonsense"), "subset of")
+  expect_error(fit_dose_response_models(ward_fixture(), models = character(0)), "subset of")
+  expect_error(analyze_dose_response(ward_fixture(), exact_bootstrap_times = -1), "exact_bootstrap_times")
+})
