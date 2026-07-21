@@ -49,7 +49,7 @@
   for (k in 0:(kmax - 1L)) {
     r <- (alpha + k) * (alpha - B + 1 + k) / ((k + 1) * dose)
     nt <- term * r
-    grew <- abs(nt) >= abs(term)          # divergent asymptotic: stop at smallest term
+    grew <- abs(nt) >= abs(term) # divergent asymptotic: stop at smallest term
     freeze <- active & grew
     active <- active & !grew
     if (any(active)) {
@@ -69,8 +69,8 @@
   A <- beta
   B <- alpha + beta
   logx <- log(dose)
-  log_t <- numeric(length(dose))          # log(term_0) = 0
-  log_s <- numeric(length(dose))          # log(sum) = 0
+  log_t <- numeric(length(dose)) # log(term_0) = 0
+  log_s <- numeric(length(dose)) # log(sum) = 0
   peak <- numeric(length(dose))
   active <- rep(TRUE, length(dose))
   n <- 0L
@@ -87,14 +87,28 @@
   exp(-dose + log_s)
 }
 
-#' Exact beta-Poisson survival S(dose) = 1 - P(dose), vectorized over dose.
+#' Exact beta-Poisson survival function
+#'
+#' Computes the survival `S(dose) = 1 - P(dose) = M(alpha, alpha + beta, -dose)`
+#' of the exact beta-Poisson dose-response model (Kummer confluent
+#' hypergeometric form), vectorized over `dose`.
+#'
+#' @param dose A non-negative numeric vector of doses.
+#' @param alpha A positive shape parameter of the Beta(alpha, beta) infectivity
+#'   distribution.
+#' @param beta A positive shape parameter of the Beta(alpha, beta) infectivity
+#'   distribution.
+#'
+#' @return A numeric vector of survival probabilities `1 - P(dose)`.
 #' @export
 exact_beta_poisson_survival <- function(dose, alpha, beta) {
   stopifnot(all(is.finite(dose)), all(dose >= 0), alpha > 0, beta > 0)
   B <- alpha + beta
   out <- numeric(length(dose))
   tiny <- dose < 1e-4
-  if (any(tiny)) out[tiny] <- 1 - dose[tiny] * alpha / B
+  if (any(tiny)) {
+    out[tiny] <- 1 - dose[tiny] * alpha / B
+  }
   rest <- which(!tiny)
   if (length(rest)) {
     d <- dose[rest]
@@ -107,9 +121,15 @@ exact_beta_poisson_survival <- function(dose, alpha, beta) {
   out
 }
 
-#' Exact beta-Poisson response P(dose) = 1 - S(dose).
-#' Slots into models.R beside exponential_response / beta_poisson_response and
-#' is registered in model_probability(); parameters are (alpha, beta).
+#' Exact beta-Poisson dose-response function
+#'
+#' Computes the response probability `P(dose) = 1 - S(dose)` of the exact
+#' beta-Poisson model. Registered in `model_probability()` alongside
+#' [exponential_response()] and [beta_poisson_response()].
+#'
+#' @inheritParams exact_beta_poisson_survival
+#'
+#' @return A numeric vector of response probabilities.
 #' @export
 exact_beta_poisson_response <- function(dose, alpha, beta) {
   1 - exact_beta_poisson_survival(dose, alpha, beta)
@@ -121,10 +141,14 @@ if (identical(environment(), globalenv()) && requireNamespace("Rmpfr", quietly =
     dd <- Rmpfr::mpfr(d, 200)
     as.numeric(Rmpfr::hypergeom1F1(Rmpfr::mpfr(a, 200), Rmpfr::mpfr(a + b, 200), -dd))
   }
-  g <- expand.grid(a = c(0.05, 0.265, 1, 2), b = c(0.1, 1, 5, 1000, 1e5),
-                   d = c(1e-3, 10, 100, 1e3, 33000, 1e5))
-  err <- mapply(function(a, b, d)
-    abs(exact_beta_poisson_survival(d, a, b) - ref(a, b, d)) / abs(ref(a, b, d)),
-    g$a, g$b, g$d)
+  g <- expand.grid(a = c(0.05, 0.265, 1, 2), b = c(0.1, 1, 5, 1000, 1e5), d = c(1e-3, 10, 100, 1e3, 33000, 1e5))
+  err <- mapply(
+    function(a, b, d) {
+      abs(exact_beta_poisson_survival(d, a, b) - ref(a, b, d)) / abs(ref(a, b, d))
+    },
+    g$a,
+    g$b,
+    g$d
+  )
   cat(sprintf("max relative error vs Rmpfr over %d points: %.3e\n", nrow(g), max(err)))
 }
