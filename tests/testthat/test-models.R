@@ -117,6 +117,18 @@ test_that("comparison generalizes to three models with the exponential baseline"
   expect_identical(preferred, cmp$model[cmp$AIC == min(cmp$AIC)])
 })
 
+test_that("comparison warns and flags a model that did not converge", {
+  fits <- fit_dose_response_models(ward_fixture())
+  fits$beta_poisson$convergence <- 1L # simulate a non-converged fit
+
+  expect_warning(
+    cmp <- compare_dose_response_models(fits),
+    "did not converge"
+  )
+  expect_false(cmp$converged[cmp$model == "beta_poisson"])
+  expect_true(cmp$converged[cmp$model == "exponential"])
+})
+
 test_that("chi-squared and information-criterion preferences remain distinct", {
   fits <- fit_dose_response_models(ward_fixture())
   fits$exponential$deviance <- 10
