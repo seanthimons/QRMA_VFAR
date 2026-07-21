@@ -35,7 +35,7 @@
 # small doses use the short Kummer series. The slow Kummer path (~1e5 terms) is
 # reached only in the extreme large-beta / large-dose corner; a higher-order
 # large-beta expansion could remove even that and is flagged as a future
-# optimization (see EXACT_BETA_POISSON_IMPLEMENTATION_PLAN.md, Pinch Point 2/5).
+# optimization.
 
 # ---- large-dose asymptotic, vectorized over dose; returns value + truncation --
 # M(a, a+b, -d) ~ Gamma(B)/Gamma(B-a) * d^-a * 2F0(a, a-B+1; ; 1/d),  B = a+b
