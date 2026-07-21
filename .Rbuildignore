@@ -1,7 +1,4 @@
-^\.git$
-^\.github$
-^\.gitignore$
-^\.Rprofile$
+^\.
 ^air\.toml$
 ^boosters$
 ^boosters\.toml$

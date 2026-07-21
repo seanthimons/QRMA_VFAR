@@ -2,10 +2,24 @@
 % Please edit documentation in R/exact_beta_poisson.R
 \name{exact_beta_poisson_survival}
 \alias{exact_beta_poisson_survival}
-\title{Exact beta-Poisson survival S(dose) = 1 - P(dose), vectorized over dose.}
+\title{Exact beta-Poisson survival function}
 \usage{
 exact_beta_poisson_survival(dose, alpha, beta)
 }
+\arguments{
+\item{dose}{A non-negative numeric vector of doses.}
+
+\item{alpha}{A positive shape parameter of the Beta(alpha, beta) infectivity
+distribution.}
+
+\item{beta}{A positive shape parameter of the Beta(alpha, beta) infectivity
+distribution.}
+}
+\value{
+A numeric vector of survival probabilities \code{1 - P(dose)}.
+}
 \description{
-Exact beta-Poisson survival S(dose) = 1 - P(dose), vectorized over dose.
+Computes the survival \code{S(dose) = 1 - P(dose) = M(alpha, alpha + beta, -dose)}
+of the exact beta-Poisson dose-response model (Kummer confluent
+hypergeometric form), vectorized over \code{dose}.
 }

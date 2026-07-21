@@ -2,14 +2,24 @@
 % Please edit documentation in R/exact_beta_poisson.R
 \name{exact_beta_poisson_response}
 \alias{exact_beta_poisson_response}
-\title{Exact beta-Poisson response P(dose) = 1 - S(dose).
-Slots into models.R beside exponential_response / beta_poisson_response and
-is registered in model_probability(); parameters are (alpha, beta).}
+\title{Exact beta-Poisson dose-response function}
 \usage{
 exact_beta_poisson_response(dose, alpha, beta)
 }
+\arguments{
+\item{dose}{A non-negative numeric vector of doses.}
+
+\item{alpha}{A positive shape parameter of the Beta(alpha, beta) infectivity
+distribution.}
+
+\item{beta}{A positive shape parameter of the Beta(alpha, beta) infectivity
+distribution.}
+}
+\value{
+A numeric vector of response probabilities.
+}
 \description{
-Exact beta-Poisson response P(dose) = 1 - S(dose).
-Slots into models.R beside exponential_response / beta_poisson_response and
-is registered in model_probability(); parameters are (alpha, beta).
+Computes the response probability \code{P(dose) = 1 - S(dose)} of the exact
+beta-Poisson model. Registered in \code{model_probability()} alongside
+\code{\link[=exponential_response]{exponential_response()}} and \code{\link[=beta_poisson_response]{beta_poisson_response()}}.
 }
