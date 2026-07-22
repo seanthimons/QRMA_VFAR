@@ -18,7 +18,6 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       ROLLING_TAG: package-latest
       R_PROFILE_USER: /dev/null
-      RENV_CONFIG_AUTOLOADER_ENABLED: false
 
     steps:
       - name: Checkout main

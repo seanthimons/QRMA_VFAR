@@ -5,7 +5,6 @@
 !/.github
 !/.gitignore
 !/.Rbuildignore
-!/.Rprofile
 
 # Output files from R CMD build
 /*.tar.gz

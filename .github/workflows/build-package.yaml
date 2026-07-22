@@ -13,7 +13,6 @@ jobs:
     env:
       GITHUB_PAT: ${{ github.token }}
       R_PROFILE_USER: /dev/null
-      RENV_CONFIG_AUTOLOADER_ENABLED: false
 
     steps:
       - name: Checkout repository
