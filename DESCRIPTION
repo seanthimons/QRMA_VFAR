@@ -12,6 +12,7 @@ Description: Fits exponential and approximate beta-Poisson dose-response
     publication-ready dose-response plots.
 License: MIT + file LICENSE
 Encoding: UTF-8
+LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 8.0.0
 Depends:
@@ -28,7 +29,10 @@ Imports:
     tidyr,
     withr
 Suggests:
+    knitr,
     mirai (>= 2.5.0),
+    rmarkdown,
     Rmpfr,
     testthat (>= 3.0.0)
+VignetteBuilder: knitr
 Config/testthat/edition: 3

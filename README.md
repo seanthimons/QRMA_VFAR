@@ -75,6 +75,40 @@ Development notes and owner-requested workflow follow-ups live in [TODO.md](TODO
 Boosterpak remains optional repository-development tooling. It is not a package
 dependency and is not needed to install or use `qrmavfar`.
 
+## Input data format
+
+Every entry point (`as_dose_response()`, `read_dose_response()`,
+`analyze_dose_response()`) expects **three columns, one row per dose group**:
+
+| Column | Auto-detected aliases | Rule |
+|--------|-----------------------|------|
+| `dose` | `dose` | numeric, finite, **> 0** |
+| `positive` | `positive`, `pos`, `positive_response` | non-negative **whole number** |
+| `negative` | `negative`, `neg`, `negative_response` | non-negative **whole number** |
+
+Matching is case- and punctuation-insensitive; override it with
+`as_dose_response(data, dose =, positive =, negative =)`. Rows sharing a dose are
+summed, and the standardized output adds `total` (`positive + negative`) and
+`response` (`positive / total`). For fitting to proceed the data must have
+**at least 3 distinct doses** and **more than 1 positive response in total**.
+
+The bundled `ward_rotavirus` dataset shows the required shape:
+
+```r
+library(qrmavfar)
+
+ward_rotavirus
+#> # A tibble: 8 x 3
+#>       dose positive negative
+#>      <dbl>    <dbl>    <dbl>
+#> 1    0.009        0        7
+#> 2    0.09         0        7
+#> 3    0.9          1        6
+#> # i 5 more rows
+
+as_dose_response(ward_rotavirus) # standardized: dose, positive, negative, total, response
+```
+
 ## Example
 
 ```r
@@ -90,15 +124,14 @@ analysis <- analyze_dose_response(
   seed = 2026
 )
 
-analysis$trend
-analysis$goodness_of_fit
-analysis$comparison
-analysis$assessment
-bootstrap_confint(analysis$bootstraps$beta_poisson)
+analysis$assessment # headline verdict: which model is recommended
+bootstrap_confint(analysis$bootstraps$beta_poisson) # parameter and ED10/ED50 intervals
 
 ggplot2::autoplot(analysis)
-ggplot2::autoplot(analysis$bootstraps$beta_poisson)
 ```
+
+See `vignette("getting-started")` for a narrated start-to-finish walkthrough that
+interprets every output.
 
 For long bootstrap runs, configure mirai workers once and select the parallel
 backend. The package leaves daemon lifecycle management to the caller:

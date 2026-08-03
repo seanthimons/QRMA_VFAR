@@ -1,5 +1,9 @@
 ^\.
 ^air\.toml$
-^data$
+^data/raw$
+^data-raw$
 ^dev$
+^renv$
+^renv\.lock$
+^TODO\.md$
 ^qrmavfar\.Rcheck$
