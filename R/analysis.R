@@ -29,7 +29,7 @@
 analyze_dose_response <- function(
   data,
   models = c("exponential", "beta_poisson"),
-  bootstrap_times = 1000L,
+  bootstrap_times = 10000L,
   exact_bootstrap_times = 10000L,
   resample = c("observed", "fitted"),
   seed = NULL,

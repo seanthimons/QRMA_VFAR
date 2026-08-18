@@ -32,7 +32,7 @@ without bootstrapping):
 analysis <- analyze_dose_response(
   ward,
   models = c("exponential", "beta_poisson", "exact_beta_poisson"),
-  bootstrap_times = 1000,        # exponential + approximate beta-Poisson
+  bootstrap_times = 10000,       # exponential + approximate beta-Poisson
   exact_bootstrap_times = 10000, # exact beta-Poisson (slower); 0 to skip
   seed = 2026
 )
@@ -119,7 +119,7 @@ ward <- read_dose_response(ward_path)
 
 analysis <- analyze_dose_response(
   ward,
-  bootstrap_times = 1000,
+  bootstrap_times = 10000,
   resample = "observed",
   seed = 2026
 )

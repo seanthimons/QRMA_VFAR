@@ -19,7 +19,7 @@
 #' @export
 bootstrap_dose_response <- function(
   object,
-  times = 1000L,
+  times = 10000L,
   resample = c("observed", "fitted"),
   seed = NULL,
   backend = c("sequential", "mirai"),
@@ -154,7 +154,7 @@ bootstrap_refit <- function(original_fit, sample_data, replicate) {
 #' @export
 bootstrap_dose_response_models <- function(
   object,
-  times = 1000L,
+  times = 10000L,
   resample = c("observed", "fitted"),
   seed = NULL,
   backend = c("sequential", "mirai"),

@@ -6,7 +6,7 @@
 \usage{
 bootstrap_dose_response(
   object,
-  times = 1000L,
+  times = 10000L,
   resample = c("observed", "fitted"),
   seed = NULL,
   backend = c("sequential", "mirai"),
