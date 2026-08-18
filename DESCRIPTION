@@ -11,6 +11,8 @@ Description: Fits exponential and approximate beta-Poisson dose-response
     model diagnostics, bootstrap uncertainty estimates, effective doses, and
     publication-ready dose-response plots.
 License: MIT + file LICENSE
+URL: https://seanthimons.github.io/QRMA_VFAR/, https://github.com/seanthimons/QRMA_VFAR
+BugReports: https://github.com/seanthimons/QRMA_VFAR/issues
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)

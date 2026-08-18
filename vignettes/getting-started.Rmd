@@ -152,10 +152,13 @@ ggplot2::autoplot(analysis$bootstraps$beta_poisson)
 Read the recommended model's `ed50` and its interval, and you have the number a risk assessor reports:
 
 ```{r final-answer}
+# Which model did the assessment recommend?
 recommended <- analysis$assessment$model[analysis$assessment$recommendation == "recommended"][1]
-ed50 <- bootstrap_confint(analysis$bootstraps[[recommended]], levels = c(0.95)) |>
-  dplyr::filter(.data$term == "ed50")
-ed50
+recommended
+
+# Its bootstrap intervals, then keep only the ed50 row.
+ci <- bootstrap_confint(analysis$bootstraps[[recommended]], levels = c(0.95))
+ci[ci$term == "ed50", ]
 ```
 
 That single row — the median infectious dose of the recommended model with its 95% percentile interval — is the deliverable: *the dose at which half of exposed subjects are expected to be infected, with a defensible bound on how sure we are.*

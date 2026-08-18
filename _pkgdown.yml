@@ -1,0 +1,64 @@
+url: https://seanthimons.github.io/QRMA_VFAR/
+
+template:
+  bootstrap: 5
+
+navbar:
+  structure:
+    left: [intro, reference, articles]
+    right: [github]
+  components:
+    github:
+      icon: fab fa-github
+      href: https://github.com/seanthimons/QRMA_VFAR
+      aria-label: GitHub
+
+reference:
+  - title: End-to-end workflow
+    contents:
+      - analyze_dose_response
+  - title: Data import
+    contents:
+      - as_dose_response
+      - read_dose_response
+  - title: Trend test
+    contents:
+      - dose_trend_test
+  - title: Model fitting
+    contents:
+      - fit_dose_response
+      - fit_dose_response_models
+  - title: Model response functions
+    contents:
+      - exponential_response
+      - beta_poisson_response
+      - exact_beta_poisson_response
+      - exact_beta_poisson_survival
+      - effective_dose
+      - prediction_curve
+  - title: Diagnostics, comparison, and assessment
+    contents:
+      - goodness_of_fit
+      - compare_dose_response_models
+      - assess_dose_response_models
+      - consensus_model_decision
+  - title: Bootstrap uncertainty
+    contents:
+      - bootstrap_dose_response
+      - bootstrap_dose_response_models
+      - bootstrap_confint
+  - title: broom / tidymodels methods
+    contents:
+      - tidy.qdr_fit
+      - glance.qdr_fit
+      - augment.qdr_fit
+  - title: Pooling multiple datasets
+    contents:
+      - poolability_test
+      - group_datasets
+  - title: Plotting
+    contents:
+      - plot_dose_response
+  - title: Data
+    contents:
+      - ward_rotavirus

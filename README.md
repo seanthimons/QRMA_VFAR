@@ -5,6 +5,11 @@ package. It fits exponential and approximate beta-Poisson models to grouped
 binomial microbial response data and returns tidy results instead of writing
 files into the working directory.
 
+In plain terms: you gave subjects increasing doses of a pathogen and counted how
+many became infected at each dose. This package estimates the dose-response
+curve from those counts and reports numbers like the dose that infects half of
+those exposed, along with honest uncertainty bounds.
+
 The package provides:
 
 - validated import of dose, positive-response, and negative-response counts;
@@ -16,6 +21,108 @@ The package provides:
 - observed-proportion or fitted-model binomial bootstraps;
 - percentile parameter intervals and pointwise confidence curves; and
 - `ggplot2` model and bootstrap plots.
+
+## Installation
+
+<!--
+Not on CRAN yet. Once released:
+
+install.packages("qrmavfar")
+-->
+
+`qrmavfar` isn't on CRAN yet, so you install it straight from GitHub. To do
+that you need a helper package — either **pak** (recommended) or **devtools**.
+You only have to install the helper once; after that it stays on your machine.
+
+**Option A — pak (recommended, faster):**
+
+```r
+# 1. Install the helper (only needed once, ever)
+install.packages("pak")
+
+# 2. Install qrmavfar from GitHub
+pak::pak("seanthimons/QRMA_VFAR")
+```
+
+**Option B — devtools:**
+
+```r
+# 1. Install the helper (only needed once, ever)
+install.packages("devtools")
+
+# 2. Install qrmavfar from GitHub
+devtools::install_github("seanthimons/QRMA_VFAR")
+```
+
+Run these lines at the R console (the `>` prompt). If you're asked to install or
+update other packages, say yes. Once it finishes, load the package like any
+other:
+
+```r
+library(qrmavfar)
+```
+
+## Input data format
+
+Every entry point (`as_dose_response()`, `read_dose_response()`,
+`analyze_dose_response()`) expects **three columns, one row per dose group**:
+
+| Column | Auto-detected aliases | Rule |
+|--------|-----------------------|------|
+| `dose` | `dose` | numeric, finite, **> 0** |
+| `positive` | `positive`, `pos`, `positive_response` | non-negative **whole number** |
+| `negative` | `negative`, `neg`, `negative_response` | non-negative **whole number** |
+
+Matching is case- and punctuation-insensitive; override it with
+`as_dose_response(data, dose =, positive =, negative =)`. Rows sharing a dose are
+summed, and the standardized output adds `total` (`positive + negative`) and
+`response` (`positive / total`). For fitting to proceed the data must have
+**at least 3 distinct doses** and **more than 1 positive response in total**.
+
+The bundled `ward_rotavirus` dataset shows the required shape:
+
+```r
+library(qrmavfar)
+
+ward_rotavirus
+#> # A tibble: 8 x 3
+#>       dose positive negative
+#>      <dbl>    <dbl>    <dbl>
+#> 1    0.009        0        7
+#> 2    0.09         0        7
+#> 3    0.9          1        6
+#> # i 5 more rows
+
+as_dose_response(ward_rotavirus) # standardized: dose, positive, negative, total, response
+```
+
+## Example
+
+```r
+library(qrmavfar)
+
+# system.file() locates a data file bundled inside the installed package.
+# For your own data, replace this with a path to your file, e.g. "my_data.txt".
+ward_path <- system.file("extdata", "Ward_rotavirus.txt", package = "qrmavfar")
+ward <- read_dose_response(ward_path)
+
+analysis <- analyze_dose_response(
+  ward,
+  bootstrap_times = 10000,
+  resample = "observed",
+  seed = 2026
+)
+
+analysis$assessment # headline verdict: which model is recommended
+bootstrap_confint(analysis$bootstraps$beta_poisson) # parameter and ED10/ED50 intervals
+
+ggplot2::autoplot(analysis)
+```
+
+See `vignette("getting-started")` for a narrated start-to-finish walkthrough that
+interprets every output.
+
+## Advanced usage
 
 ### Exact beta-Poisson model (opt-in)
 
@@ -70,68 +177,7 @@ Datasets are combined by **stacking** — each trial's dose groups are kept as
 separate binomial observations, so repeated doses across trials are preserved
 (matching the QMRA-wiki pooled-experiment convention), rather than summed.
 
-Development notes and owner-requested workflow follow-ups live in [TODO.md](TODO.md).
-
-Boosterpak remains optional repository-development tooling. It is not a package
-dependency and is not needed to install or use `qrmavfar`.
-
-## Input data format
-
-Every entry point (`as_dose_response()`, `read_dose_response()`,
-`analyze_dose_response()`) expects **three columns, one row per dose group**:
-
-| Column | Auto-detected aliases | Rule |
-|--------|-----------------------|------|
-| `dose` | `dose` | numeric, finite, **> 0** |
-| `positive` | `positive`, `pos`, `positive_response` | non-negative **whole number** |
-| `negative` | `negative`, `neg`, `negative_response` | non-negative **whole number** |
-
-Matching is case- and punctuation-insensitive; override it with
-`as_dose_response(data, dose =, positive =, negative =)`. Rows sharing a dose are
-summed, and the standardized output adds `total` (`positive + negative`) and
-`response` (`positive / total`). For fitting to proceed the data must have
-**at least 3 distinct doses** and **more than 1 positive response in total**.
-
-The bundled `ward_rotavirus` dataset shows the required shape:
-
-```r
-library(qrmavfar)
-
-ward_rotavirus
-#> # A tibble: 8 x 3
-#>       dose positive negative
-#>      <dbl>    <dbl>    <dbl>
-#> 1    0.009        0        7
-#> 2    0.09         0        7
-#> 3    0.9          1        6
-#> # i 5 more rows
-
-as_dose_response(ward_rotavirus) # standardized: dose, positive, negative, total, response
-```
-
-## Example
-
-```r
-library(qrmavfar)
-
-ward_path <- system.file("extdata", "Ward_rotavirus.txt", package = "qrmavfar")
-ward <- read_dose_response(ward_path)
-
-analysis <- analyze_dose_response(
-  ward,
-  bootstrap_times = 10000,
-  resample = "observed",
-  seed = 2026
-)
-
-analysis$assessment # headline verdict: which model is recommended
-bootstrap_confint(analysis$bootstraps$beta_poisson) # parameter and ED10/ED50 intervals
-
-ggplot2::autoplot(analysis)
-```
-
-See `vignette("getting-started")` for a narrated start-to-finish walkthrough that
-interprets every output.
+### Parallel bootstraps (mirai)
 
 For long bootstrap runs, configure mirai workers once and select the parallel
 backend. The package leaves daemon lifecycle management to the caller:
@@ -152,6 +198,13 @@ mirai::daemons(0)
 Bootstrap samples are generated before parallel dispatch, so the same `seed`
 produces identical results with `backend = "sequential"` and
 `backend = "mirai"`. Only the model refits are sent to workers.
+
+## Development
+
+Development notes and owner-requested workflow follow-ups live in [TODO.md](TODO.md).
+
+Boosterpak remains optional repository-development tooling. It is not a package
+dependency and is not needed to install or use `qrmavfar`.
 
 For development, the original Ward source file remains at
 `data/raw/Ward_rotavirus.txt`. The legacy script is retained under `dev/` as a
