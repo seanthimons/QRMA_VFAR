@@ -35,3 +35,10 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+/.quarto/
+
+# renv scaffolding in the package root crashes pak-based CI; keep it local-only
+renv/
+renv.lock
+.Rprofile

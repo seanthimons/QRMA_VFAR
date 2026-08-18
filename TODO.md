@@ -202,12 +202,14 @@ MISMATCH (code does something methodologically different), MISSING (absent).
     reconstruction evaluates the Kummer series per draw; revisit if 10k-replicate
     band plots prove slow.)
 
-### Reference validation and the multi-start fitting pivot (2026-07-20)
+### Historical v3 reference validation and the multi-start fitting pivot (2026-07-20)
 
-The two-model outputs were validated against the QMRA-wiki Excel target
-(`data/raw/QMRA wiki data_v3_Camila.xlsx`, ~120 fittable single-experiment
-datasets). The fit / goodness-of-fit / comparison arithmetic reproduces the
-reference; the divergences traced to optimizer start values, not formulas.
+The two-model outputs were historically validated against the QMRA-wiki v3 Excel
+target (`QMRA wiki data_v3_Camila.xlsx`, ~120 fittable single-experiment
+datasets). That superseded workbook is no longer tracked, but this record is
+retained as provenance. The fit / goodness-of-fit / comparison arithmetic
+reproduced the reference; the divergences traced to optimizer start values, not
+formulas.
 
 **Design pivot (documented so end users are not surprised):** the single
 geometric-mean-dose `default_start()` was replaced by `candidate_starts()` plus a
@@ -228,6 +230,11 @@ With the item-1 nonzero-response screen set to reading B, experiments 62 and 39
 reference experiment runs with zero errors** and the preferred-model match is
 118/121 (98%). Pooled experiments are handled by the stacking-based pooling
 feature (see item 6), which reproduces their reference stacked deviances.
+
+The current reproducible audit targets `data/raw/QMRA wiki data_v4.xlsx` through
+`dev/validation/validate_qmra_v4.R`. It records every workbook experiment or an
+explicit skip reason and writes the tracked experiment, prediction, and Markdown
+validation results under `dev/validation/`.
 
 ## Current implementation notes
 

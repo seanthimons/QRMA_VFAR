@@ -16,10 +16,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-This vignette walks the Ward rotavirus human-challenge data from raw counts to a
-reported risk number, interpreting every output along the way. It answers two
-questions an end user actually has: *what does my data need to look like going
-in*, and *what are the results saying coming out*.
+This vignette walks the Ward rotavirus human-challenge data from raw counts to a reported risk number, interpreting every output along the way. It answers two questions an end user actually has: *what does my data need to look like going in*, and *what are the results saying coming out*.
 
 ```{r setup}
 library(qrmavfar)
@@ -27,25 +24,21 @@ library(qrmavfar)
 
 ## Load
 
-The analysis needs **three columns, one row per dose group**: the administered
-`dose`, and the numbers of subjects who did (`positive`) and did not (`negative`)
-respond. The package ships this exact shape as `ward_rotavirus`:
+The analysis needs **three columns, one row per dose group**: the administered `dose`, and the numbers of subjects who did (`positive`) and did not (`negative`) respond. The package ships this exact shape as `ward_rotavirus`:
 
 ```{r load-data}
 data(ward_rotavirus)
 ward_rotavirus
 ```
 
-There are two ways in. The **in-memory** path standardizes a data frame you
-already have:
+There are two ways in. The **in-memory** path standardizes a data frame you already have:
 
 ```{r as-dose-response}
 ward <- as_dose_response(ward_rotavirus)
 ward
 ```
 
-The **from-disk** path reads the same data from the bundled text file — this is
-what you would use for your own delimited file:
+The **from-disk** path reads the same data from the bundled text file — this is what you would use for your own delimited file:
 
 ```{r read-from-disk}
 ward_path <- system.file("extdata", "Ward_rotavirus.txt", package = "qrmavfar")
@@ -54,24 +47,16 @@ ward_from_file <- read_dose_response(ward_path)
 identical(ward, ward_from_file)
 ```
 
-Both routes produce the standardized `dose · positive · negative · total ·
-response` tibble, where `total = positive + negative` and `response =
-positive / total`. Column names are auto-detected case- and
-punctuation-insensitively (`pos`, `positive_response`, etc.); override detection
-with `as_dose_response(data, dose =, positive =, negative =)`. Rows sharing a dose
-are summed. Fitting requires **at least 3 distinct doses** and **more than 1 total
-positive response** — non-conforming data is rejected with an explanatory error.
+Both routes produce the standardized `dose · positive · negative · total · response` tibble, where `total = positive + negative` and `response = positive / total`. Column names are auto-detected case- and punctuation-insensitively (`pos`, `positive_response`, etc.); override detection with `as_dose_response(data, dose =, positive =, negative =)`. Rows sharing a dose are summed. Fitting requires **at least 3 distinct doses** and **more than 1 total positive response** — non-conforming data is rejected with an explanatory error.
 
 ## Run
 
-`analyze_dose_response()` does everything in one call: trend test, model fits,
-diagnostics, comparison, assessment, and bootstrap uncertainty. A fixed `seed`
-makes the bootstrap reproducible.
+`analyze_dose_response()` does everything in one call: trend test, model fits, diagnostics, comparison, assessment, and bootstrap uncertainty. A fixed `seed` makes the bootstrap reproducible.
 
 ```{r analyze}
 analysis <- analyze_dose_response(
   ward,
-  bootstrap_times = 1000,
+  bootstrap_times = 1000, # reduced for a fast vignette build; the default is 10000
   resample = "observed",
   seed = 2026
 )
@@ -89,13 +74,9 @@ The rest of this vignette unpacks each component of that `qdr_analysis` object.
 analysis$trend
 ```
 
-`dose_trend_test()` runs a one-sided log-dose trend test. `passes = TRUE` means a
-**monotonic increasing** dose-response relationship was detected — response rises
-with dose.
+`dose_trend_test()` runs a one-sided log-dose trend test. `passes = TRUE` means a **monotonic increasing** dose-response relationship was detected — response rises with dose.
 
-> **What this is really saying:** if `passes` were `FALSE`, there is no upward
-> dose-response signal to model, and fitting mechanistic curves would not be
-> warranted. Here it passes, so we proceed.
+> **What this is really saying:** if `passes` were `FALSE`, there is no upward dose-response signal to model, and fitting mechanistic curves would not be warranted. Here it passes, so we proceed.
 
 ### Goodness of fit — does each model fit the data at all?
 
@@ -103,14 +84,9 @@ with dose.
 analysis$goodness_of_fit
 ```
 
-This is the **absolute** check. Each model's `deviance` is compared against a
-chi-squared `critical_value`; `good_fit` is `TRUE` when the deviance falls below
-it (equivalently, `p_value` > 0.05). `assessment` records `adequate` or
-`inadequate`.
+This is the **absolute** check. Each model's `deviance` is compared against a chi-squared `critical_value`; `good_fit` is `TRUE` when the deviance falls below it (equivalently, `p_value` \> 0.05). `assessment` records `adequate` or `inadequate`.
 
-> **What this is really saying:** does this model describe the data acceptably on
-> its own terms? A model can "win" a comparison and still fit badly — this is the
-> gate that catches that.
+> **What this is really saying:** does this model describe the data acceptably on its own terms? A model can "win" a comparison and still fit badly — this is the gate that catches that.
 
 ### Comparison — which model wins, and did the extra parameter earn its keep?
 
@@ -118,15 +94,9 @@ it (equivalently, `p_value` > 0.05). `assessment` records `adequate` or
 analysis$comparison
 ```
 
-This is the **relative** check. The two-parameter Beta-Poisson is tested against
-the one-parameter Exponential (its nested limiting case) via the
-`deviance_difference` on the extra degree of freedom, alongside `AIC`/`BIC` and
-their deltas. `significant_improvement` and `preferred` flag the winner.
+This is the **relative** check. The two-parameter Beta-Poisson is tested against the one-parameter Exponential (its nested limiting case) via the `deviance_difference` on the extra degree of freedom, alongside `AIC`/`BIC` and their deltas. `significant_improvement` and `preferred` flag the winner.
 
-> **What this is really saying:** the Beta-Poisson always fits at least as well
-> because it has an extra parameter — `significant_improvement` asks whether that
-> extra flexibility bought a *statistically real* improvement, or just curve-fit
-> noise.
+> **What this is really saying:** the Beta-Poisson always fits at least as well because it has an extra parameter — `significant_improvement` asks whether that extra flexibility bought a *statistically real* improvement, or just curve-fit noise.
 
 ### Assessment — the headline verdict
 
@@ -134,18 +104,14 @@ their deltas. `significant_improvement` and `preferred` flag the winner.
 analysis$assessment[, c("model", "appropriate", "preferred", "recommendation", "conclusion")]
 ```
 
-`build_model_assessment()` fuses the absolute and relative checks into one
-`recommendation` label per model:
+`build_model_assessment()` fuses the absolute and relative checks into one `recommendation` label per model:
 
-- `recommended` — fits adequately **and** is preferred.
-- `acceptable_alternative` — fits adequately but is not preferred.
-- `preferred_but_inadequate` — preferred but does **not** fit adequately (a red
-  flag: the "best" model is still wrong).
-- `not_recommended` — neither.
+-   `recommended` — fits adequately **and** is preferred.
+-   `acceptable_alternative` — fits adequately but is not preferred.
+-   `preferred_but_inadequate` — preferred but does **not** fit adequately (a red flag: the "best" model is still wrong).
+-   `not_recommended` — neither.
 
-> **What this is really saying:** this is the one row a risk assessor reads first.
-> `recommended` means "use this model with confidence"; the `conclusion` column
-> spells it out in plain language.
+> **What this is really saying:** this is the one row a risk assessor reads first. `recommended` means "use this model with confidence"; the `conclusion` column spells it out in plain language.
 
 ### Consensus — an experimental cross-check
 
@@ -153,13 +119,9 @@ analysis$assessment[, c("model", "appropriate", "preferred", "recommendation", "
 consensus_model_decision(analysis)
 ```
 
-`consensus_model_decision()` treats the chi-squared, AIC, and BIC selections as
-three votes and reports the `agreement` level (`unanimous`, `majority`, or
-`no_consensus`).
+`consensus_model_decision()` treats the chi-squared, AIC, and BIC selections as three votes and reports the `agreement` level (`unanimous`, `majority`, or `no_consensus`).
 
-> **What this is really saying:** an experimental sanity check on the relative
-> selection. It does **not** replace the absolute goodness-of-fit gate above — a
-> unanimously-voted model can still fit inadequately.
+> **What this is really saying:** an experimental sanity check on the relative selection. It does **not** replace the absolute goodness-of-fit gate above — a unanimously-voted model can still fit inadequately.
 
 ### Bootstrap intervals — the final risk numbers and their uncertainty
 
@@ -167,14 +129,9 @@ three votes and reports the `agreement` level (`unanimous`, `majority`, or
 bootstrap_confint(analysis$bootstraps$beta_poisson, levels = c(0.95))
 ```
 
-The bootstrap refits the model to resampled data many times and reports
-percentile confidence intervals — not just for the parameters (`alpha`, `n50`)
-but for the **effective doses** `ed10` and `ed50`: the doses producing a 10% and
-50% response.
+The bootstrap refits the model to resampled data many times and reports percentile confidence intervals — not just for the parameters (`alpha`, `n50`) but for the **effective doses** `ed10` and `ed50`: the doses producing a 10% and 50% response.
 
-> **What this is really saying:** these are the deliverable. `ed50` is the median
-> infectious dose; its interval is the honest uncertainty around it, driven by how
-> much data you have and how noisy it is.
+> **What this is really saying:** these are the deliverable. `ed50` is the median infectious dose; its interval is the honest uncertainty around it, driven by how much data you have and how noisy it is.
 
 ## Plots
 
@@ -184,8 +141,7 @@ but for the **effective doses** `ed10` and `ed50`: the doses producing a 10% and
 ggplot2::autoplot(analysis)
 ```
 
-`autoplot()` on a bootstrap object shows the sampling distribution of the fitted
-parameters — the visual form of the intervals above:
+`autoplot()` on a bootstrap object shows the sampling distribution of the fitted parameters — the visual form of the intervals above:
 
 ```{r plot-bootstrap}
 ggplot2::autoplot(analysis$bootstraps$beta_poisson)
@@ -193,8 +149,7 @@ ggplot2::autoplot(analysis$bootstraps$beta_poisson)
 
 ## The final answer
 
-Read the recommended model's `ed50` and its interval, and you have the number a
-risk assessor reports:
+Read the recommended model's `ed50` and its interval, and you have the number a risk assessor reports:
 
 ```{r final-answer}
 recommended <- analysis$assessment$model[analysis$assessment$recommendation == "recommended"][1]
@@ -203,6 +158,4 @@ ed50 <- bootstrap_confint(analysis$bootstraps[[recommended]], levels = c(0.95)) 
 ed50
 ```
 
-That single row — the median infectious dose of the recommended model with its
-95% percentile interval — is the deliverable: *the dose at which half of exposed
-subjects are expected to be infected, with a defensible bound on how sure we are.*
+That single row — the median infectious dose of the recommended model with its 95% percentile interval — is the deliverable: *the dose at which half of exposed subjects are expected to be infected, with a defensible bound on how sure we are.*
