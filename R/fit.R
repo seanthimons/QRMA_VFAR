@@ -205,6 +205,10 @@ model_parameters <- function(model) {
 # optimum across the QMRA-wiki dose-response set:
 #   - capped ID50 seed: anchors low-infectivity fits (responses only at the top
 #     doses) near their true tiny rate; the cap stops it saturating the max dose.
+#   - uncapped ID50 seed: for data that saturates well below the max dose the cap
+#     above collapses the seed to a near-zero k, from which BFGS overshoots into
+#     the clamped-probability plateau and reports a spurious "converged" optimum.
+#     The uncapped log(2)/ID50 seed starts in the true optimum's basin instead.
 #   - geometric-mean-dose seed: the historical default, robust for shallow data.
 #   - fixed k = exp(-5): the CAMRA reference's fixed exponential seed.
 candidate_starts <- function(data, model) {
@@ -215,6 +219,7 @@ candidate_starts <- function(data, model) {
     model,
     exponential = list(
       c(k = min(log(2) / median_dose, 10 / max(data$dose))),
+      c(k = log(2) / median_dose),
       c(k = log(2) / middle_dose),
       c(k = exp(-5))
     ),
