@@ -260,4 +260,4 @@ validation results under `dev/validation/`.
   `analysis$assessment` to determine whether the selected model also fits the
   data adequately.
 - Boosterpak remains optional repository-development tooling. It is not a
-  package dependency and is not needed to install or use `qrmavfar`.
+  package dependency and is not needed to install or use `singlehit`.

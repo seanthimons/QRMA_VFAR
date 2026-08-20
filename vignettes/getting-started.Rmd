@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 This vignette walks the Ward rotavirus human-challenge data from raw counts to a reported risk number, interpreting every output along the way. It answers two questions an end user actually has: *what does my data need to look like going in*, and *what are the results saying coming out*.
 
 ```{r setup}
-library(qrmavfar)
+library(singlehit)
 ```
 
 ## Load
@@ -41,7 +41,7 @@ ward
 The **from-disk** path reads the same data from the bundled text file — this is what you would use for your own delimited file:
 
 ```{r read-from-disk}
-ward_path <- system.file("extdata", "Ward_rotavirus.txt", package = "qrmavfar")
+ward_path <- system.file("extdata", "Ward_rotavirus.txt", package = "singlehit")
 ward_from_file <- read_dose_response(ward_path)
 
 identical(ward, ward_from_file)

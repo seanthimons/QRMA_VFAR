@@ -1,4 +1,4 @@
-#' qrmavfar: microbial dose-response model fitting
+#' singlehit: microbial dose-response model fitting
 #'
 #' @keywords internal
 #' @importFrom generics augment glance tidy

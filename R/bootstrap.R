@@ -172,7 +172,7 @@ start_mirai_bootstrap <- function(inputs, object) {
   owns_daemons <- !mirai::daemons_set(.compute = compute)
   if (owns_daemons) {
     if (is.null(compute)) {
-      compute <- basename(tempfile("qrmavfar-"))
+      compute <- basename(tempfile("singlehit-"))
     }
     workers <- if (is.null(inputs$workers)) recommended_bootstrap_workers() else inputs$workers
     mirai::daemons(workers, .compute = compute)

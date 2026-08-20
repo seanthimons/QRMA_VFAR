@@ -1,4 +1,4 @@
 library(testthat)
-library(qrmavfar)
+library(singlehit)
 
-test_check("qrmavfar")
+test_check("singlehit")

@@ -1,4 +1,4 @@
-url: https://seanthimons.github.io/QRMA_VFAR/
+url: https://seanthimons.github.io/singlehit/
 
 template:
   bootstrap: 5
@@ -10,7 +10,7 @@ navbar:
   components:
     github:
       icon: fab fa-github
-      href: https://github.com/seanthimons/QRMA_VFAR
+      href: https://github.com/seanthimons/singlehit
       aria-label: GitHub
 
 reference:
