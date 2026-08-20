@@ -8,7 +8,7 @@ coming out*.
 
 ``` r
 
-library(qrmavfar)
+library(singlehit)
 ```
 
 ## Load
@@ -58,7 +58,7 @@ this is what you would use for your own delimited file:
 
 ``` r
 
-ward_path <- system.file("extdata", "Ward_rotavirus.txt", package = "qrmavfar")
+ward_path <- system.file("extdata", "Ward_rotavirus.txt", package = "singlehit")
 ward_from_file <- read_dose_response(ward_path)
 
 identical(ward, ward_from_file)
@@ -77,7 +77,7 @@ rejected with an explanatory error.
 
 ## Run
 
-[`analyze_dose_response()`](https://seanthimons.github.io/QRMA_VFAR/reference/analyze_dose_response.md)
+[`analyze_dose_response()`](https://seanthimons.github.io/singlehit/reference/analyze_dose_response.md)
 does everything in one call: trend test, model fits, diagnostics,
 comparison, assessment, and bootstrap uncertainty. A fixed `seed` makes
 the bootstrap reproducible.
@@ -132,7 +132,7 @@ analysis$trend
 #> 1      5.04 0.000000238  0.05 TRUE   increasing
 ```
 
-[`dose_trend_test()`](https://seanthimons.github.io/QRMA_VFAR/reference/dose_trend_test.md)
+[`dose_trend_test()`](https://seanthimons.github.io/singlehit/reference/dose_trend_test.md)
 runs a one-sided log-dose trend test. `passes = TRUE` means a
 **monotonic increasing** dose-response relationship was detected —
 response rises with dose.
@@ -229,7 +229,7 @@ consensus_model_decision(analysis)
 #> #   conclusion <chr>
 ```
 
-[`consensus_model_decision()`](https://seanthimons.github.io/QRMA_VFAR/reference/consensus_model_decision.md)
+[`consensus_model_decision()`](https://seanthimons.github.io/singlehit/reference/consensus_model_decision.md)
 treats the chi-squared, AIC, and BIC selections as three votes and
 reports the `agreement` level (`unanimous`, `majority`, or
 `no_consensus`).

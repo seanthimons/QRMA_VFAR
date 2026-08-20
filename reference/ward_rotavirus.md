@@ -5,13 +5,13 @@ human-challenge study, in which healthy adult volunteers ingested
 measured doses of live CJN-strain rotavirus and were monitored for
 infection. Each row is one dose group, in the raw 3-column shape
 accepted by
-[`as_dose_response()`](https://seanthimons.github.io/QRMA_VFAR/reference/as_dose_response.md):
+[`as_dose_response()`](https://seanthimons.github.io/singlehit/reference/as_dose_response.md):
 the administered `dose` and the numbers of subjects who did (`positive`)
 and did not (`negative`) respond. Pass it straight to
-[`as_dose_response()`](https://seanthimons.github.io/QRMA_VFAR/reference/as_dose_response.md),
-[`analyze_dose_response()`](https://seanthimons.github.io/QRMA_VFAR/reference/analyze_dose_response.md),
+[`as_dose_response()`](https://seanthimons.github.io/singlehit/reference/as_dose_response.md),
+[`analyze_dose_response()`](https://seanthimons.github.io/singlehit/reference/analyze_dose_response.md),
 or
-[`read_dose_response()`](https://seanthimons.github.io/QRMA_VFAR/reference/read_dose_response.md)
+[`read_dose_response()`](https://seanthimons.github.io/singlehit/reference/read_dose_response.md)
 (via the bundled file, see source) as the canonical example dataset for
 the package.
 

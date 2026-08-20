@@ -39,7 +39,7 @@ methodologically different), MISSING (absent).
 | 3 | IMPLEMENTED | Binomial MLE (`optim`/BFGS) + chi-squared deviance goodness-of-fit. |
 | 4 | IMPLEMENTED\* | Percentile bootstrap CIs, 95% default, MLE refit per replicate. Caveats below. |
 | 5 | IMPLEMENTED | Δdeviance vs chi-squared, generalized to N models (exponential as the nested baseline; AIC tiebreak among non-nested equal-parameter models). |
-| 6 | IMPLEMENTED | [`poolability_test()`](https://seanthimons.github.io/QRMA_VFAR/reference/poolability_test.md) (Haas likelihood-ratio test) + [`group_datasets()`](https://seanthimons.github.io/QRMA_VFAR/reference/group_datasets.md) (subset grouping); datasets combined by stacking. |
+| 6 | IMPLEMENTED | [`poolability_test()`](https://seanthimons.github.io/singlehit/reference/poolability_test.md) (Haas likelihood-ratio test) + [`group_datasets()`](https://seanthimons.github.io/singlehit/reference/group_datasets.md) (subset grouping); datasets combined by stacking. |
 | 7 | IMPLEMENTED | Residual deviance vs saturated base case, `qchisq(df_residual)`. |
 | 8 | IMPLEMENTED | Deviances + chi-squared p-values surfaced as tibble columns. |
 | 9 | IMPLEMENTED | Plotting is model-generic (routes through `model_probability` / `model_parameters`); exact-model CI bands and parameter plots work. |
@@ -66,7 +66,7 @@ methodologically different), MISSING (absent).
     for a monotonic increasing trend** — response rising with dose — run
     before any model is fit, exactly as the Weir CAMRA code does it
     (`if (Zca > 1.644)` in `dev/CAMRA_bootstrap_v10_5_kh.R:57-62`).
-    [`dose_trend_test()`](https://seanthimons.github.io/QRMA_VFAR/reference/dose_trend_test.md)
+    [`dose_trend_test()`](https://seanthimons.github.io/singlehit/reference/dose_trend_test.md)
     (`R/fit.R`) reproduces that reference **line for line**: log-dose
     scores, the same `Zca` formula, and a one-sided gate
     (`pnorm(Zca, lower.tail = FALSE) < alpha`, i.e. `Zca > 1.645`). The
@@ -97,7 +97,7 @@ methodologically different), MISSING (absent).
     percentile CIs with 95% default (`bootstrap_confint`,
     `R/bootstrap.R:187-208`). Works for all three models including the
     exact one (model-agnostic via `model_parameters()` +
-    [`effective_dose()`](https://seanthimons.github.io/QRMA_VFAR/reference/effective_dose.md)).
+    [`effective_dose()`](https://seanthimons.github.io/singlehit/reference/effective_dose.md)).
     Caveats: (a) default `resample = "observed"` draws from observed
     group proportions, not the fitted-MLE curve — strict parametric
     bootstrap requires `resample = "fitted"`; (b) intervals cover
@@ -106,7 +106,7 @@ methodologically different), MISSING (absent).
     `test-bootstrap-plot.R` exists).
 
 5.  **Relative fit by Δdeviance vs chi-squared — IMPLEMENTED.**
-    [`compare_dose_response_models()`](https://seanthimons.github.io/QRMA_VFAR/reference/compare_dose_response_models.md)
+    [`compare_dose_response_models()`](https://seanthimons.github.io/singlehit/reference/compare_dose_response_models.md)
     (`R/fit.R`) computes Δdeviance = simpler − fuller, compared to
     `qchisq(1-alpha, df = Δparameters)`; `preferred` follows this test
     (AIC/BIC reported separately, not driving `preferred`). It is
@@ -115,9 +115,9 @@ methodologically different), MISSING (absent).
     third model cannot enter — see the three-model decision note below.
 
 6.  **Pooling — IMPLEMENTED.** `R/pooling.R` adds
-    [`poolability_test()`](https://seanthimons.github.io/QRMA_VFAR/reference/poolability_test.md)
+    [`poolability_test()`](https://seanthimons.github.io/singlehit/reference/poolability_test.md)
     and
-    [`group_datasets()`](https://seanthimons.github.io/QRMA_VFAR/reference/group_datasets.md).
+    [`group_datasets()`](https://seanthimons.github.io/singlehit/reference/group_datasets.md).
     Pooling in QMRA is a *poolability decision* (Haas, Rose & Gerba):
     given multiple trials for a pathogen, test whether they are
     statistically the same before combining.
@@ -125,15 +125,15 @@ methodologically different), MISSING (absent).
     separately and the **stacked** combination, then compares
     `deviance_pooled - sum(deviance_individual)` to a chi-squared on
     `k*(m-1)` df, per model.
-    [`group_datasets()`](https://seanthimons.github.io/QRMA_VFAR/reference/group_datasets.md)
+    [`group_datasets()`](https://seanthimons.github.io/singlehit/reference/group_datasets.md)
     extends this to find which trials are mutually poolable (greedy
     agglomerative by default; exhaustive set-partition search for small
     `m`). Datasets are combined by **stacking** (each trial’s dose
     groups kept as separate binomial observations), enabled by splitting
     `fit_core()` out of
-    [`fit_dose_response()`](https://seanthimons.github.io/QRMA_VFAR/reference/fit_dose_response.md)
+    [`fit_dose_response()`](https://seanthimons.github.io/singlehit/reference/fit_dose_response.md)
     so the stacked frame is fit without the
-    [`as_dose_response()`](https://seanthimons.github.io/QRMA_VFAR/reference/as_dose_response.md)
+    [`as_dose_response()`](https://seanthimons.github.io/singlehit/reference/as_dose_response.md)
     sum-aggregation.
 
     This resolves the earlier aggregate-vs-stack divergence: the
@@ -142,7 +142,7 @@ methodologically different), MISSING (absent).
     `tests/testthat/test-pooling.R`), not the aggregated 3.05. The
     poolability LRT is textbook-grounded; the subset-grouping heuristic
     is a documented convenience (not a theorem). Single-dataset
-    [`as_dose_response()`](https://seanthimons.github.io/QRMA_VFAR/reference/as_dose_response.md)
+    [`as_dose_response()`](https://seanthimons.github.io/singlehit/reference/as_dose_response.md)
     still aggregates same-dose rows — that within-dataset behavior is
     unchanged.
 
@@ -157,17 +157,17 @@ methodologically different), MISSING (absent).
 
 8.  **Output deviances + chi-squared p-values — IMPLEMENTED.** Surfaced
     as real columns, not internal scalars:
-    [`goodness_of_fit()`](https://seanthimons.github.io/QRMA_VFAR/reference/goodness_of_fit.md)
+    [`goodness_of_fit()`](https://seanthimons.github.io/singlehit/reference/goodness_of_fit.md)
     → `deviance`, `p_value` (`R/fit.R:236-237`);
-    [`compare_dose_response_models()`](https://seanthimons.github.io/QRMA_VFAR/reference/compare_dose_response_models.md)
+    [`compare_dose_response_models()`](https://seanthimons.github.io/singlehit/reference/compare_dose_response_models.md)
     → `deviance`, `deviance_difference`, `chi_square_p_value`;
-    [`glance.qdr_fit()`](https://seanthimons.github.io/QRMA_VFAR/reference/glance.qdr_fit.md)
+    [`glance.qdr_fit()`](https://seanthimons.github.io/singlehit/reference/glance.qdr_fit.md)
     → `deviance` (`R/tidiers.R:66`).
-    [`analyze_dose_response()`](https://seanthimons.github.io/QRMA_VFAR/reference/analyze_dose_response.md)
+    [`analyze_dose_response()`](https://seanthimons.github.io/singlehit/reference/analyze_dose_response.md)
     carries both tibbles on the `qdr_analysis` object.
 
 9.  **Output plots — PARTIAL.**
-    [`plot_dose_response()`](https://seanthimons.github.io/QRMA_VFAR/reference/plot_dose_response.md)
+    [`plot_dose_response()`](https://seanthimons.github.io/singlehit/reference/plot_dose_response.md)
     / `autoplot.qdr_analysis` plot data points, fitted curve, and
     bootstrap CI ribbons for exponential and approximate beta-Poisson.
     The exact model breaks in two spots that hardcode the approximate-BP
@@ -185,14 +185,14 @@ methodologically different), MISSING (absent).
     `build_model_assessment()` (`R/assessment.R:27-67`), printed by
     `print.qdr_analysis` (`R/analysis.R:83-87`). `preferred` is driven
     by the chi-squared deviance test;
-    [`consensus_model_decision()`](https://seanthimons.github.io/QRMA_VFAR/reference/consensus_model_decision.md)
+    [`consensus_model_decision()`](https://seanthimons.github.io/singlehit/reference/consensus_model_decision.md)
     adds an experimental three-vote (chi-squared/AIC/BIC) summary.
     Two-model only — the exact model is excluded via
     `fit_dose_response_models` and the `length(fits) != 2L` guard.
 
 ### Corrections to the planning docs
 
-- [`consensus_model_decision()`](https://seanthimons.github.io/QRMA_VFAR/reference/consensus_model_decision.md)
+- [`consensus_model_decision()`](https://seanthimons.github.io/singlehit/reference/consensus_model_decision.md)
   is **present and exported** (`R/assessment.R:111-182`, `NAMESPACE`).
   Earlier planning notes claimed it was “missing from the working tree”
   — that claim is stale; the function is in the working source.
@@ -216,7 +216,7 @@ methodologically different), MISSING (absent).
     rejected them. Initial guard commit `5776110`; reading-B correction
     after validating against the QMRA-wiki target.
   - Item 2: confirmed
-    [`dose_trend_test()`](https://seanthimons.github.io/QRMA_VFAR/reference/dose_trend_test.md)
+    [`dose_trend_test()`](https://seanthimons.github.io/singlehit/reference/dose_trend_test.md)
     correctly implements the directional monotonic-increasing pre-screen
     (Weir `Zca > 1.645` gate). Sharpened the docs and added a
     directional test (increasing passes, decreasing does not). The
@@ -228,7 +228,7 @@ methodologically different), MISSING (absent).
     validation. Commit `8f60fb0`.
 - **Pinch Point 7 decided (2026-07-20): full N-model generalization.**
   - Item 5 — DONE.
-    [`compare_dose_response_models()`](https://seanthimons.github.io/QRMA_VFAR/reference/compare_dose_response_models.md)
+    [`compare_dose_response_models()`](https://seanthimons.github.io/singlehit/reference/compare_dose_response_models.md)
     now accepts two or more fits. The exponential is the common nested
     sub-model: each higher-parameter model is tested against it by the
     deviance difference on `parameters - 1` df; `preferred` is the
@@ -237,14 +237,14 @@ methodologically different), MISSING (absent).
     (approximate vs exact beta-Poisson) are separated by AIC/BIC only.
     With exactly two models the output reduces to the previous
     simpler-vs-fuller test (existing tests unchanged).
-    [`consensus_model_decision()`](https://seanthimons.github.io/QRMA_VFAR/reference/consensus_model_decision.md)
+    [`consensus_model_decision()`](https://seanthimons.github.io/singlehit/reference/consensus_model_decision.md)
     already handled N models and works on a three-model set as-is
     (verified: Ward selects the exact beta-Poisson unanimously). A
     three-model comparison test was added.
   - Item 10 — DONE.
-    [`fit_dose_response_models()`](https://seanthimons.github.io/QRMA_VFAR/reference/fit_dose_response_models.md)
+    [`fit_dose_response_models()`](https://seanthimons.github.io/singlehit/reference/fit_dose_response_models.md)
     and
-    [`analyze_dose_response()`](https://seanthimons.github.io/QRMA_VFAR/reference/analyze_dose_response.md)
+    [`analyze_dose_response()`](https://seanthimons.github.io/singlehit/reference/analyze_dose_response.md)
     gained a `models` argument (default the two legacy models; add
     `"exact_beta_poisson"` to opt in). All requested models flow through
     fitting, the N-model comparison, `build_model_assessment()`
@@ -274,7 +274,7 @@ divergences traced to optimizer start values, not formulas.
 **Design pivot (documented so end users are not surprised):** the single
 geometric-mean-dose `default_start()` was replaced by
 `candidate_starts()` plus a multi-start loop in
-[`fit_dose_response()`](https://seanthimons.github.io/QRMA_VFAR/reference/fit_dose_response.md).
+[`fit_dose_response()`](https://seanthimons.github.io/singlehit/reference/fit_dose_response.md).
 A single seed cannot avoid every start-dependent local optimum — an
 exponential fit to beta-Poisson-shaped data (Ward) falls into a spurious
 saturated optimum, while a low-infectivity pathogen (e.g. Coxiella, true
@@ -302,7 +302,7 @@ prediction, and Markdown validation results under `dev/validation/`.
 
 ## Current implementation notes
 
-- [`dose_trend_test()`](https://seanthimons.github.io/QRMA_VFAR/reference/dose_trend_test.md)
+- [`dose_trend_test()`](https://seanthimons.github.io/singlehit/reference/dose_trend_test.md)
   currently preserves the package’s existing log-dose, one-sided
   normal/Z trend gate. The owner-requested checklist item names
   chi-squared evaluation; if needed for reporting, that can be added
@@ -319,7 +319,7 @@ prediction, and Markdown validation results under `dev/validation/`.
   `recommended` when it both fits the data adequately and is preferred
   by the chi-squared deviance comparison. The `conclusion` column
   provides the matching human-readable statement.
-- [`consensus_model_decision()`](https://seanthimons.github.io/QRMA_VFAR/reference/consensus_model_decision.md)
+- [`consensus_model_decision()`](https://seanthimons.github.io/singlehit/reference/consensus_model_decision.md)
   is experimental. It treats the chi-squared comparison, AIC, and BIC as
   three model-selection votes and reports each vote, the total per
   model, and an agreement level of `unanimous`, `majority`, or
@@ -327,4 +327,4 @@ prediction, and Markdown validation results under `dev/validation/`.
   `analysis$assessment` to determine whether the selected model also
   fits the data adequately.
 - Boosterpak remains optional repository-development tooling. It is not
-  a package dependency and is not needed to install or use `qrmavfar`.
+  a package dependency and is not needed to install or use `singlehit`.

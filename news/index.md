@@ -1,6 +1,6 @@
 # Changelog
 
-## qrmavfar 0.1.0
+## singlehit 0.1.0
 
 - Converted the legacy CAMRA exponential and beta-Poisson workflow into
   a side-effect-free R package API.
@@ -14,5 +14,5 @@
   that keep absolute model adequacy separate from relative model
   preference.
 - Added the experimental
-  [`consensus_model_decision()`](https://seanthimons.github.io/QRMA_VFAR/reference/consensus_model_decision.md)
+  [`consensus_model_decision()`](https://seanthimons.github.io/singlehit/reference/consensus_model_decision.md)
   vote parser for the chi-squared, AIC, and BIC model selections.

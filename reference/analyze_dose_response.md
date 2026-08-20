@@ -13,8 +13,9 @@ analyze_dose_response(
   exact_bootstrap_times = 10000L,
   resample = c("observed", "fitted"),
   seed = NULL,
-  backend = c("sequential", "mirai"),
+  backend = c("auto", "sequential", "mirai"),
   compute = NULL,
+  workers = NULL,
   check_trend = TRUE,
   alpha = 0.05
 )
@@ -25,7 +26,7 @@ analyze_dose_response(
 - data:
 
   Grouped dose-response data accepted by
-  [`as_dose_response()`](https://seanthimons.github.io/QRMA_VFAR/reference/as_dose_response.md).
+  [`as_dose_response()`](https://seanthimons.github.io/singlehit/reference/as_dose_response.md).
 
 - models:
 
@@ -49,7 +50,7 @@ analyze_dose_response(
 - resample:
 
   Bootstrap method passed to
-  [`bootstrap_dose_response()`](https://seanthimons.github.io/QRMA_VFAR/reference/bootstrap_dose_response.md).
+  [`bootstrap_dose_response()`](https://seanthimons.github.io/singlehit/reference/bootstrap_dose_response.md).
 
 - seed:
 
@@ -58,11 +59,16 @@ analyze_dose_response(
 - backend:
 
   Bootstrap execution backend passed to
-  [`bootstrap_dose_response()`](https://seanthimons.github.io/QRMA_VFAR/reference/bootstrap_dose_response.md).
+  [`bootstrap_dose_response()`](https://seanthimons.github.io/singlehit/reference/bootstrap_dose_response.md).
 
 - compute:
 
   Optional mirai compute profile name.
+
+- workers:
+
+  Number of temporary local mirai daemons, passed to
+  [`bootstrap_dose_response()`](https://seanthimons.github.io/singlehit/reference/bootstrap_dose_response.md).
 
 - check_trend:
 

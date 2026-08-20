@@ -22,7 +22,7 @@ poolability_test(
 - datasets:
 
   A named list of dose-response data frames (accepted by
-  [`as_dose_response()`](https://seanthimons.github.io/QRMA_VFAR/reference/as_dose_response.md))
+  [`as_dose_response()`](https://seanthimons.github.io/singlehit/reference/as_dose_response.md))
   or already-standardized tibbles. Unnamed elements are named
   `dataset_1`, `dataset_2`, and so on.
 

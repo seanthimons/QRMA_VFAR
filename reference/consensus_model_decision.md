@@ -3,7 +3,7 @@
 Treats the chi-squared deviance comparison, AIC, and BIC selections as
 three votes. This is an experimental relative model-selection summary;
 it does not replace the absolute goodness-of-fit assessment from
-[`assess_dose_response_models()`](https://seanthimons.github.io/QRMA_VFAR/reference/assess_dose_response_models.md).
+[`assess_dose_response_models()`](https://seanthimons.github.io/singlehit/reference/assess_dose_response_models.md).
 
 ## Usage
 
@@ -16,7 +16,7 @@ consensus_model_decision(object, alpha = 0.05)
 - object:
 
   A comparison tibble returned by
-  [`compare_dose_response_models()`](https://seanthimons.github.io/QRMA_VFAR/reference/compare_dose_response_models.md),
+  [`compare_dose_response_models()`](https://seanthimons.github.io/singlehit/reference/compare_dose_response_models.md),
   a `qdr_analysis`, a `qdr_model_set`, or a list of two `qdr_fit`
   objects.
 

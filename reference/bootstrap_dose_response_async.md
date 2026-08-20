@@ -1,16 +1,17 @@
-# Bootstrap both dose-response models
+# Start a non-blocking dose-response bootstrap
 
-Bootstrap both dose-response models
+Starts mirai bootstrap refits and immediately returns a job. Call
+[`collect_bootstrap()`](https://seanthimons.github.io/singlehit/reference/collect_bootstrap.md)
+to wait for and retrieve the completed result.
 
 ## Usage
 
 ``` r
-bootstrap_dose_response_models(
+bootstrap_dose_response_async(
   object,
   times = 10000L,
   resample = c("observed", "fitted"),
   seed = NULL,
-  backend = c("auto", "sequential", "mirai"),
   compute = NULL,
   workers = NULL
 )
@@ -20,7 +21,7 @@ bootstrap_dose_response_models(
 
 - object:
 
-  A `qdr_model_set` or list of `qdr_fit` objects.
+  A `qdr_fit` object.
 
 - times:
 
@@ -33,13 +34,6 @@ bootstrap_dose_response_models(
 - seed:
 
   Optional integer random seed.
-
-- backend:
-
-  Execution backend. `"auto"` uses mirai above 1,000 replicates when it
-  is installed and otherwise runs sequentially. `"sequential"` runs
-  refits in the current R process. `"mirai"` distributes refits to
-  existing daemons or a temporary local pool.
 
 - compute:
 
@@ -54,4 +48,5 @@ bootstrap_dose_response_models(
 
 ## Value
 
-A named list of `qdr_bootstrap` objects.
+A `qdr_bootstrap_job` for
+[`collect_bootstrap()`](https://seanthimons.github.io/singlehit/reference/collect_bootstrap.md).

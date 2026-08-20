@@ -13,8 +13,9 @@ bootstrap_dose_response(
   times = 10000L,
   resample = c("observed", "fitted"),
   seed = NULL,
-  backend = c("sequential", "mirai"),
-  compute = NULL
+  backend = c("auto", "sequential", "mirai"),
+  compute = NULL,
+  workers = NULL
 )
 ```
 
@@ -38,15 +39,21 @@ bootstrap_dose_response(
 
 - backend:
 
-  Execution backend. `"sequential"` runs refits in the current R
-  process. `"mirai"` distributes refits to daemons previously configured
-  with
-  [`mirai::daemons()`](https://mirai.r-lib.org/reference/daemons.html).
+  Execution backend. `"auto"` uses mirai above 1,000 replicates when it
+  is installed and otherwise runs sequentially. `"sequential"` runs
+  refits in the current R process. `"mirai"` distributes refits to
+  existing daemons or a temporary local pool.
 
 - compute:
 
   Optional mirai compute profile name. Ignored by the sequential
   backend.
+
+- workers:
+
+  Number of temporary local mirai daemons. `NULL` uses 75% of detected
+  physical cores, with a minimum of one. Ignored when using existing
+  daemons or the sequential backend.
 
 ## Value
 

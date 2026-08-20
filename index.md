@@ -1,6 +1,6 @@
-# qrmavfar
+# singlehit
 
-`qrmavfar` converts the CAMRA dose-response modeling script into a
+`singlehit` converts the CAMRA dose-response modeling script into a
 reusable R package. It fits exponential and approximate beta-Poisson
 models to grouped binomial microbial response data and returns tidy
 results instead of writing files into the working directory.
@@ -28,8 +28,8 @@ The package provides:
 
 ## Installation
 
-`qrmavfar` isn’t on CRAN yet, so you install it straight from GitHub. To
-do that you need a helper package — either **pak** (recommended) or
+`singlehit` isn’t on CRAN yet, so you install it straight from GitHub.
+To do that you need a helper package — either **pak** (recommended) or
 **devtools**. You only have to install the helper once; after that it
 stays on your machine.
 
@@ -40,8 +40,8 @@ stays on your machine.
 # 1. Install the helper (only needed once, ever)
 install.packages("pak")
 
-# 2. Install qrmavfar from GitHub
-pak::pak("seanthimons/QRMA_VFAR")
+# 2. Install singlehit from GitHub
+pak::pak("seanthimons/singlehit")
 ```
 
 **Option B — devtools:**
@@ -51,8 +51,8 @@ pak::pak("seanthimons/QRMA_VFAR")
 # 1. Install the helper (only needed once, ever)
 install.packages("devtools")
 
-# 2. Install qrmavfar from GitHub
-devtools::install_github("seanthimons/QRMA_VFAR")
+# 2. Install singlehit from GitHub
+devtools::install_github("seanthimons/singlehit")
 ```
 
 Run these lines at the R console (the `>` prompt). If you’re asked to
@@ -61,15 +61,15 @@ package like any other:
 
 ``` r
 
-library(qrmavfar)
+library(singlehit)
 ```
 
 ## Input data format
 
 Every entry point
-([`as_dose_response()`](https://seanthimons.github.io/QRMA_VFAR/reference/as_dose_response.md),
-[`read_dose_response()`](https://seanthimons.github.io/QRMA_VFAR/reference/read_dose_response.md),
-[`analyze_dose_response()`](https://seanthimons.github.io/QRMA_VFAR/reference/analyze_dose_response.md))
+([`as_dose_response()`](https://seanthimons.github.io/singlehit/reference/as_dose_response.md),
+[`read_dose_response()`](https://seanthimons.github.io/singlehit/reference/read_dose_response.md),
+[`analyze_dose_response()`](https://seanthimons.github.io/singlehit/reference/analyze_dose_response.md))
 expects **three columns, one row per dose group**:
 
 | Column | Auto-detected aliases | Rule |
@@ -89,7 +89,7 @@ The bundled `ward_rotavirus` dataset shows the required shape:
 
 ``` r
 
-library(qrmavfar)
+library(singlehit)
 
 ward_rotavirus
 #> # A tibble: 8 x 3
@@ -107,11 +107,11 @@ as_dose_response(ward_rotavirus) # standardized: dose, positive, negative, total
 
 ``` r
 
-library(qrmavfar)
+library(singlehit)
 
 # system.file() locates a data file bundled inside the installed package.
 # For your own data, replace this with a path to your file, e.g. "my_data.txt".
-ward_path <- system.file("extdata", "Ward_rotavirus.txt", package = "qrmavfar")
+ward_path <- system.file("extdata", "Ward_rotavirus.txt", package = "singlehit")
 ward <- read_dose_response(ward_path)
 
 analysis <- analyze_dose_response(
@@ -128,7 +128,7 @@ ggplot2::autoplot(analysis)
 ```
 
 See
-[`vignette("getting-started")`](https://seanthimons.github.io/QRMA_VFAR/articles/getting-started.md)
+[`vignette("getting-started")`](https://seanthimons.github.io/singlehit/articles/getting-started.md)
 for a narrated start-to-finish walkthrough that interprets every output.
 
 ## Advanced usage
@@ -158,7 +158,7 @@ analysis <- analyze_dose_response(
 ### Fitting robustness (multi-start)
 
 When no starting values are supplied,
-[`fit_dose_response()`](https://seanthimons.github.io/QRMA_VFAR/reference/fit_dose_response.md)
+[`fit_dose_response()`](https://seanthimons.github.io/singlehit/reference/fit_dose_response.md)
 fits the model from several candidate starting values and keeps the
 highest-likelihood result. A single starting value cannot avoid every
 start-dependent local optimum across the range of real dose-response
@@ -173,13 +173,13 @@ performance is unaffected.
 ### Pooling multiple datasets
 
 When several trials exist for one pathogen,
-[`poolability_test()`](https://seanthimons.github.io/QRMA_VFAR/reference/poolability_test.md)
+[`poolability_test()`](https://seanthimons.github.io/singlehit/reference/poolability_test.md)
 runs the Haas likelihood-ratio test to decide whether they can be
 combined: it fits each dataset separately and the stacked combination,
 then compares the deviance difference to a chi-squared distribution (per
 model). Datasets that pool significantly worse than when fit separately
 are kept distinct.
-[`group_datasets()`](https://seanthimons.github.io/QRMA_VFAR/reference/group_datasets.md)
+[`group_datasets()`](https://seanthimons.github.io/singlehit/reference/group_datasets.md)
 extends this to find which trials are mutually poolable.
 
 ``` r
@@ -197,21 +197,30 @@ rather than summed.
 
 ### Parallel bootstraps (mirai)
 
-For long bootstrap runs, configure mirai workers once and select the
-parallel backend. The package leaves daemon lifecycle management to the
-caller:
+Bootstrap runs above 1,000 replicates automatically use mirai when it is
+installed. If no daemons are already configured, the package starts a
+temporary pool using 75% of the machine’s detected physical cores and
+removes that pool after collecting the result. Supply `workers` to
+override that default:
 
 ``` r
-
-mirai::daemons(4)
 
 analysis <- analyze_dose_response(
   ward,
   bootstrap_times = 10000,
   seed = 2026,
-  backend = "mirai"
+  workers = 12
 )
+```
 
+Existing mirai daemons are reused and remain under caller control. Use
+`backend = "sequential"` to disable automatic parallelization, or
+configure a pool explicitly:
+
+``` r
+
+mirai::daemons(4)
+analysis <- analyze_dose_response(ward, bootstrap_times = 10000)
 mirai::daemons(0)
 ```
 
@@ -219,13 +228,25 @@ Bootstrap samples are generated before parallel dispatch, so the same
 `seed` produces identical results with `backend = "sequential"` and
 `backend = "mirai"`. Only the model refits are sent to workers.
 
+For a non-blocking bootstrap, start a job and collect it when the result
+is needed:
+
+``` r
+
+fit <- fit_dose_response(ward, "beta_poisson")
+job <- bootstrap_dose_response_async(fit, times = 10000, seed = 2026)
+
+# The R console is available while daemons fit the bootstrap samples.
+result <- collect_bootstrap(job)
+```
+
 ## Development
 
 Development notes and owner-requested workflow follow-ups live in
-[TODO.md](https://seanthimons.github.io/QRMA_VFAR/TODO.md).
+[TODO.md](https://seanthimons.github.io/singlehit/TODO.md).
 
 Boosterpak remains optional repository-development tooling. It is not a
-package dependency and is not needed to install or use `qrmavfar`.
+package dependency and is not needed to install or use `singlehit`.
 
 For development, the original Ward source file remains at
 `data/raw/Ward_rotavirus.txt`. The legacy script is retained under

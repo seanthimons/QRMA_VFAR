@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Mechanistic Dose-Response Models for Microbial Risk Assessment • qrmavfar</title>
+<title>Mechanistic Dose-Response Models for Microbial Risk Assessment • singlehit</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -20,7 +20,7 @@
 
     <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
 
-    <a class="navbar-brand me-2" href="index.html">qrmavfar</a>
+    <a class="navbar-brand me-2" href="index.html">singlehit</a>
 
     <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
@@ -40,7 +40,7 @@
 </li>
       </ul>
 <ul class="navbar-nav">
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/seanthimons/QRMA_VFAR" aria-label="GitHub"><span class="fa fab fa-github"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/seanthimons/singlehit" aria-label="GitHub"><span class="fa fab fa-github"></span></a></li>
       </ul>
 </div>
 
@@ -49,9 +49,9 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="qrmavfar">qrmavfar<a class="anchor" aria-label="anchor" href="#qrmavfar"></a>
+<div class="page-header"><h1 id="singlehit">singlehit<a class="anchor" aria-label="anchor" href="#singlehit"></a>
 </h1></div>
-<p><code>qrmavfar</code> converts the CAMRA dose-response modeling script into a reusable R package. It fits exponential and approximate beta-Poisson models to grouped binomial microbial response data and returns tidy results instead of writing files into the working directory.</p>
+<p><code>singlehit</code> converts the CAMRA dose-response modeling script into a reusable R package. It fits exponential and approximate beta-Poisson models to grouped binomial microbial response data and returns tidy results instead of writing files into the working directory.</p>
 <p>In plain terms: you gave subjects increasing doses of a pathogen and counted how many became infected at each dose. This package estimates the dose-response curve from those counts and reports numbers like the dose that infects half of those exposed, along with honest uncertainty bounds.</p>
 <p>The package provides:</p>
 <ul>
@@ -71,26 +71,26 @@
 <!--
 Not on CRAN yet. Once released:
 
-install.packages("qrmavfar")
+install.packages("singlehit")
 -->
-<p><code>qrmavfar</code> isn’t on CRAN yet, so you install it straight from GitHub. To do that you need a helper package — either <strong>pak</strong> (recommended) or <strong>devtools</strong>. You only have to install the helper once; after that it stays on your machine.</p>
+<p><code>singlehit</code> isn’t on CRAN yet, so you install it straight from GitHub. To do that you need a helper package — either <strong>pak</strong> (recommended) or <strong>devtools</strong>. You only have to install the helper once; after that it stays on your machine.</p>
 <p><strong>Option A — pak (recommended, faster):</strong></p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># 1. Install the helper (only needed once, ever)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pak"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># 2. Install qrmavfar from GitHub</span></span>
-<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"seanthimons/QRMA_VFAR"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># 2. Install singlehit from GitHub</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"seanthimons/singlehit"</span><span class="op">)</span></span></code></pre></div>
 <p><strong>Option B — devtools:</strong></p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># 1. Install the helper (only needed once, ever)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"devtools"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># 2. Install qrmavfar from GitHub</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"seanthimons/QRMA_VFAR"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># 2. Install singlehit from GitHub</span></span>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"seanthimons/singlehit"</span><span class="op">)</span></span></code></pre></div>
 <p>Run these lines at the R console (the <code>&gt;</code> prompt). If you’re asked to install or update other packages, say yes. Once it finishes, load the package like any other:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://seanthimons.github.io/QRMA_VFAR/">qrmavfar</a></span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://seanthimons.github.io/singlehit/">singlehit</a></span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="input-data-format">Input data format<a class="anchor" aria-label="anchor" href="#input-data-format"></a>
@@ -135,7 +135,7 @@ install.packages("qrmavfar")
 <p>Matching is case- and punctuation-insensitive; override it with <code>as_dose_response(data, dose =, positive =, negative =)</code>. Rows sharing a dose are summed, and the standardized output adds <code>total</code> (<code>positive + negative</code>) and <code>response</code> (<code>positive / total</code>). For fitting to proceed the data must have <strong>at least 3 distinct doses</strong> and <strong>more than 1 positive response in total</strong>.</p>
 <p>The bundled <code>ward_rotavirus</code> dataset shows the required shape:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://seanthimons.github.io/QRMA_VFAR/">qrmavfar</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://seanthimons.github.io/singlehit/">singlehit</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">ward_rotavirus</span></span>
 <span><span class="co">#&gt; # A tibble: 8 x 3</span></span>
@@ -152,11 +152,11 @@ install.packages("qrmavfar")
 <h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h2>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://seanthimons.github.io/QRMA_VFAR/">qrmavfar</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://seanthimons.github.io/singlehit/">singlehit</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># system.file() locates a data file bundled inside the installed package.</span></span>
 <span><span class="co"># For your own data, replace this with a path to your file, e.g. "my_data.txt".</span></span>
-<span><span class="va">ward_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"Ward_rotavirus.txt"</span>, package <span class="op">=</span> <span class="st">"qrmavfar"</span><span class="op">)</span></span>
+<span><span class="va">ward_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"Ward_rotavirus.txt"</span>, package <span class="op">=</span> <span class="st">"singlehit"</span><span class="op">)</span></span>
 <span><span class="va">ward</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/read_dose_response.html">read_dose_response</a></span><span class="op">(</span><span class="va">ward_path</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">analysis</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/analyze_dose_response.html">analyze_dose_response</a></span><span class="op">(</span></span>
@@ -207,34 +207,42 @@ install.packages("qrmavfar")
 <div class="section level3">
 <h3 id="parallel-bootstraps-mirai">Parallel bootstraps (mirai)<a class="anchor" aria-label="anchor" href="#parallel-bootstraps-mirai"></a>
 </h3>
-<p>For long bootstrap runs, configure mirai workers once and select the parallel backend. The package leaves daemon lifecycle management to the caller:</p>
+<p>Bootstrap runs above 1,000 replicates automatically use mirai when it is installed. If no daemons are already configured, the package starts a temporary pool using 75% of the machine’s detected physical cores and removes that pool after collecting the result. Supply <code>workers</code> to override that default:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">mirai</span><span class="fu">::</span><span class="fu"><a href="https://mirai.r-lib.org/reference/daemons.html" class="external-link">daemons</a></span><span class="op">(</span><span class="fl">4</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">analysis</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/analyze_dose_response.html">analyze_dose_response</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">analysis</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/analyze_dose_response.html">analyze_dose_response</a></span><span class="op">(</span></span>
 <span>  <span class="va">ward</span>,</span>
 <span>  bootstrap_times <span class="op">=</span> <span class="fl">10000</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">2026</span>,</span>
-<span>  backend <span class="op">=</span> <span class="st">"mirai"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
+<span>  workers <span class="op">=</span> <span class="fl">12</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Existing mirai daemons are reused and remain under caller control. Use <code>backend = "sequential"</code> to disable automatic parallelization, or configure a pool explicitly:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">mirai</span><span class="fu">::</span><span class="fu"><a href="https://mirai.r-lib.org/reference/daemons.html" class="external-link">daemons</a></span><span class="op">(</span><span class="fl">4</span><span class="op">)</span></span>
+<span><span class="va">analysis</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/analyze_dose_response.html">analyze_dose_response</a></span><span class="op">(</span><span class="va">ward</span>, bootstrap_times <span class="op">=</span> <span class="fl">10000</span><span class="op">)</span></span>
 <span><span class="fu">mirai</span><span class="fu">::</span><span class="fu"><a href="https://mirai.r-lib.org/reference/daemons.html" class="external-link">daemons</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span></code></pre></div>
 <p>Bootstrap samples are generated before parallel dispatch, so the same <code>seed</code> produces identical results with <code>backend = "sequential"</code> and <code>backend = "mirai"</code>. Only the model refits are sent to workers.</p>
+<p>For a non-blocking bootstrap, start a job and collect it when the result is needed:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_dose_response.html">fit_dose_response</a></span><span class="op">(</span><span class="va">ward</span>, <span class="st">"beta_poisson"</span><span class="op">)</span></span>
+<span><span class="va">job</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/bootstrap_dose_response_async.html">bootstrap_dose_response_async</a></span><span class="op">(</span><span class="va">fit</span>, times <span class="op">=</span> <span class="fl">10000</span>, seed <span class="op">=</span> <span class="fl">2026</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># The R console is available while daemons fit the bootstrap samples.</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/collect_bootstrap.html">collect_bootstrap</a></span><span class="op">(</span><span class="va">job</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
 <h2 id="development">Development<a class="anchor" aria-label="anchor" href="#development"></a>
 </h2>
 <p>Development notes and owner-requested workflow follow-ups live in <a href="TODO.html">TODO.md</a>.</p>
-<p>Boosterpak remains optional repository-development tooling. It is not a package dependency and is not needed to install or use <code>qrmavfar</code>.</p>
+<p>Boosterpak remains optional repository-development tooling. It is not a package dependency and is not needed to install or use <code>singlehit</code>.</p>
 <p>For development, the original Ward source file remains at <code>data/raw/Ward_rotavirus.txt</code>. The legacy script is retained under <code>dev/</code> as a methodological reference; package functions do not source it or depend on its global variables.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/seanthimons/QRMA_VFAR/" class="external-link">Browse source code</a></li>
-<li><a href="https://github.com/seanthimons/QRMA_VFAR/issues" class="external-link">Report a bug</a></li>
+<li><a href="https://github.com/seanthimons/singlehit/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/seanthimons/singlehit/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
 
@@ -251,7 +259,7 @@ install.packages("qrmavfar")
 <div class="citation">
 <h2 data-toc-skip>Citation</h2>
 <ul class="list-unstyled">
-<li><a href="authors.html#citation">Citing qrmavfar</a></li>
+<li><a href="authors.html#citation">Citing singlehit</a></li>
 </ul>
 </div>
 

@@ -19,7 +19,7 @@ fit_dose_response(
 - data:
 
   Grouped dose-response data accepted by
-  [`as_dose_response()`](https://seanthimons.github.io/QRMA_VFAR/reference/as_dose_response.md).
+  [`as_dose_response()`](https://seanthimons.github.io/singlehit/reference/as_dose_response.md).
 
 - model:
 

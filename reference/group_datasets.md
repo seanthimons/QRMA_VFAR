@@ -2,7 +2,7 @@
 
 Assigns datasets to groups such that the datasets within a group are
 statistically poolable (via the
-[`poolability_test()`](https://seanthimons.github.io/QRMA_VFAR/reference/poolability_test.md)
+[`poolability_test()`](https://seanthimons.github.io/singlehit/reference/poolability_test.md)
 likelihood-ratio test) and datasets in different groups are not.
 Grouping is performed per model, because poolability can differ between
 the exponential and beta-Poisson models.
@@ -24,7 +24,7 @@ group_datasets(
 - datasets:
 
   A named list of dose-response data frames (accepted by
-  [`as_dose_response()`](https://seanthimons.github.io/QRMA_VFAR/reference/as_dose_response.md))
+  [`as_dose_response()`](https://seanthimons.github.io/singlehit/reference/as_dose_response.md))
   or already-standardized tibbles. Unnamed elements are named
   `dataset_1`, `dataset_2`, and so on.
 
