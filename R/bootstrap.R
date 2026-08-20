@@ -9,11 +9,15 @@
 #' @param times Number of bootstrap replicates.
 #' @param resample Either `"observed"` or `"fitted"`.
 #' @param seed Optional integer random seed.
-#' @param backend Execution backend. `"sequential"` runs refits in the current
-#'   R process. `"mirai"` distributes refits to daemons previously configured
-#'   with [mirai::daemons()].
+#' @param backend Execution backend. `"auto"` uses mirai above 1,000 replicates
+#'   when it is installed and otherwise runs sequentially. `"sequential"` runs
+#'   refits in the current R process. `"mirai"` distributes refits to existing
+#'   daemons or a temporary local pool.
 #' @param compute Optional mirai compute profile name. Ignored by the sequential
 #'   backend.
+#' @param workers Number of temporary local mirai daemons. `NULL` uses 75% of
+#'   detected physical cores, with a minimum of one. Ignored when using existing
+#'   daemons or the sequential backend.
 #'
 #' @return A `qdr_bootstrap` tibble with one row per replicate.
 #' @export
@@ -22,26 +26,109 @@ bootstrap_dose_response <- function(
   times = 10000L,
   resample = c("observed", "fitted"),
   seed = NULL,
-  backend = c("sequential", "mirai"),
-  compute = NULL
+  backend = c("auto", "sequential", "mirai"),
+  compute = NULL,
+  workers = NULL
 ) {
+  inputs <- prepare_bootstrap(object, times, resample, seed, backend, compute, workers)
+  backend <- inputs$backend
+  if (backend == "sequential") {
+    estimates <- run_sequential_bootstrap(inputs$tasks, object)
+    return(new_qdr_bootstrap(estimates, object, inputs$resample, backend))
+  }
+  collect_bootstrap(start_mirai_bootstrap(inputs, object))
+}
+
+#' Start a non-blocking dose-response bootstrap
+#'
+#' Starts mirai bootstrap refits and immediately returns a job. Call
+#' [collect_bootstrap()] to wait for and retrieve the completed result.
+#'
+#' @inheritParams bootstrap_dose_response
+#'
+#' @return A `qdr_bootstrap_job` for [collect_bootstrap()].
+#' @export
+bootstrap_dose_response_async <- function(
+  object,
+  times = 10000L,
+  resample = c("observed", "fitted"),
+  seed = NULL,
+  compute = NULL,
+  workers = NULL
+) {
+  inputs <- prepare_bootstrap(object, times, resample, seed, "mirai", compute, workers)
+  start_mirai_bootstrap(inputs, object)
+}
+
+#' Collect a non-blocking bootstrap job
+#'
+#' @param job A `qdr_bootstrap_job` returned by
+#'   [bootstrap_dose_response_async()].
+#'
+#' @return A completed `qdr_bootstrap` tibble.
+#' @export
+collect_bootstrap <- function(job) {
+  if (!inherits(job, "qdr_bootstrap_job")) {
+    stop("`job` must be a qdr_bootstrap_job.", call. = FALSE)
+  }
+  if (job$owns_daemons) {
+    on.exit(mirai::daemons(0L, .compute = job$compute), add = TRUE)
+  }
+  results <- mirai::collect_mirai(job$map)
+  estimates <- bind_bootstrap_results(results)
+  new_qdr_bootstrap(estimates, job$fit, job$resample, "mirai")
+}
+
+prepare_bootstrap <- function(object, times, resample, seed, backend, compute, workers) {
   check_qdr_fit(object)
-  resample <- match.arg(resample)
-  backend <- match.arg(backend)
+  resample <- match.arg(resample, c("observed", "fitted"))
+  backend <- match.arg(backend, c("auto", "sequential", "mirai"))
+  requested_backend <- backend
   if (length(times) != 1L || !is.numeric(times) || !is.finite(times) || times < 1 || times != floor(times)) {
     stop("`times` must be a positive whole number.", call. = FALSE)
   }
   if (!is.null(compute) && (!is.character(compute) || length(compute) != 1L || is.na(compute) || !nzchar(compute))) {
     stop("`compute` must be NULL or one non-empty mirai compute profile name.", call. = FALSE)
   }
-  times <- as.integer(times)
-  probability <- if (resample == "observed") object$data$response else object$fitted
-  tasks <- generate_bootstrap_tasks(object, probability, times, seed)
-  estimates <- if (backend == "sequential") {
-    run_sequential_bootstrap(tasks, object)
-  } else {
-    run_mirai_bootstrap(tasks, object, compute)
+  if (
+    !is.null(workers) &&
+      (length(workers) != 1L || !is.numeric(workers) || !is.finite(workers) || workers < 1 || workers != floor(workers))
+  ) {
+    stop("`workers` must be NULL or a positive whole number.", call. = FALSE)
   }
+  times <- as.integer(times)
+  backend <- select_bootstrap_backend(backend, times)
+  if (requested_backend == "auto" && backend == "sequential" && times > 1000L) {
+    warning("Package 'mirai' is not installed; running bootstraps sequentially.", call. = FALSE)
+  }
+  probability <- if (resample == "observed") object$data$response else object$fitted
+  list(
+    tasks = generate_bootstrap_tasks(object, probability, times, seed),
+    resample = resample,
+    backend = backend,
+    compute = compute,
+    workers = if (is.null(workers)) NULL else as.integer(workers)
+  )
+}
+
+select_bootstrap_backend <- function(backend, times, mirai_available = requireNamespace("mirai", quietly = TRUE)) {
+  if (backend != "auto") {
+    return(backend)
+  }
+  if (times > 1000L && mirai_available) "mirai" else "sequential"
+}
+
+recommended_bootstrap_workers <- function(cores = parallel::detectCores(logical = FALSE)) {
+  if (length(cores) != 1L || is.na(cores) || cores < 1L) {
+    cores <- parallel::detectCores(logical = TRUE)
+  }
+  if (length(cores) != 1L || is.na(cores) || cores < 1L) {
+    return(1L)
+  }
+  max(1L, as.integer(floor(0.75 * cores)))
+}
+
+new_qdr_bootstrap <- function(estimates, object, resample, backend) {
   parameter_columns <- c(model_parameters(object$model), "ed10", "ed50")
   structure(
     estimates,
@@ -77,20 +164,48 @@ run_sequential_bootstrap <- function(tasks, object) {
   })
 }
 
-run_mirai_bootstrap <- function(tasks, object, compute) {
+start_mirai_bootstrap <- function(inputs, object) {
   if (!requireNamespace("mirai", quietly = TRUE)) {
     stop("Package 'mirai' is required for `backend = \"mirai\"`.", call. = FALSE)
   }
-  mirai::require_daemons(.compute = compute, call = environment())
-  mapped <- mirai::mirai_map(
-    tasks,
-    function(task, original_fit, refit) {
-      refit(original_fit, task$sample_data, task$replicate)
-    },
-    .args = list(original_fit = object, refit = bootstrap_refit),
-    .compute = compute
+  compute <- inputs$compute
+  owns_daemons <- !mirai::daemons_set(.compute = compute)
+  if (owns_daemons) {
+    if (is.null(compute)) {
+      compute <- basename(tempfile("qrmavfar-"))
+    }
+    workers <- if (is.null(inputs$workers)) recommended_bootstrap_workers() else inputs$workers
+    mirai::daemons(workers, .compute = compute)
+  }
+  mapped <- tryCatch(
+    mirai::mirai_map(
+      inputs$tasks,
+      function(task, original_fit, refit) {
+        refit(original_fit, task$sample_data, task$replicate)
+      },
+      .args = list(original_fit = object, refit = bootstrap_refit),
+      .compute = compute
+    ),
+    error = function(cnd) {
+      if (owns_daemons) {
+        mirai::daemons(0L, .compute = compute)
+      }
+      stop(cnd)
+    }
   )
-  results <- mapped[]
+  structure(
+    list(
+      map = mapped,
+      fit = object,
+      resample = inputs$resample,
+      compute = compute,
+      owns_daemons = owns_daemons
+    ),
+    class = "qdr_bootstrap_job"
+  )
+}
+
+bind_bootstrap_results <- function(results) {
   failed <- vapply(results, function(result) inherits(result, c("miraiError", "errorValue")), logical(1))
   if (any(failed)) {
     first_failure <- results[[which(failed)[[1L]]]]
@@ -157,8 +272,9 @@ bootstrap_dose_response_models <- function(
   times = 10000L,
   resample = c("observed", "fitted"),
   seed = NULL,
-  backend = c("sequential", "mirai"),
-  compute = NULL
+  backend = c("auto", "sequential", "mirai"),
+  compute = NULL,
+  workers = NULL
 ) {
   fits <- as_fit_list(object)
   resample <- match.arg(resample)
@@ -171,7 +287,8 @@ bootstrap_dose_response_models <- function(
       resample = resample,
       seed = model_seed,
       backend = backend,
-      compute = compute
+      compute = compute,
+      workers = workers
     )
   })
 }

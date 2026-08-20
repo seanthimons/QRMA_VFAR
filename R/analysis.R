@@ -19,6 +19,8 @@
 #' @param backend Bootstrap execution backend passed to
 #'   [bootstrap_dose_response()].
 #' @param compute Optional mirai compute profile name.
+#' @param workers Number of temporary local mirai daemons, passed to
+#'   [bootstrap_dose_response()].
 #' @param check_trend Warn when an increasing trend is not detected.
 #' @param alpha Significance level for trend and goodness-of-fit tests.
 #'
@@ -33,8 +35,9 @@ analyze_dose_response <- function(
   exact_bootstrap_times = 10000L,
   resample = c("observed", "fitted"),
   seed = NULL,
-  backend = c("sequential", "mirai"),
+  backend = c("auto", "sequential", "mirai"),
   compute = NULL,
+  workers = NULL,
   check_trend = TRUE,
   alpha = 0.05
 ) {
@@ -60,7 +63,8 @@ analyze_dose_response <- function(
       resample = resample,
       seed = model_seed,
       backend = backend,
-      compute = compute
+      compute = compute,
+      workers = workers
     )
   })
   bootstraps <- purrr::compact(bootstraps)

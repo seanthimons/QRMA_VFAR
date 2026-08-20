@@ -23,6 +23,7 @@ Imports:
     dplyr,
     generics,
     ggplot2,
+    parallel,
     purrr,
     readr,
     rlang,

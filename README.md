@@ -179,25 +179,44 @@ separate binomial observations, so repeated doses across trials are preserved
 
 ### Parallel bootstraps (mirai)
 
-For long bootstrap runs, configure mirai workers once and select the parallel
-backend. The package leaves daemon lifecycle management to the caller:
+Bootstrap runs above 1,000 replicates automatically use mirai when it is
+installed. If no daemons are already configured, the package starts a temporary
+pool using 75% of the machine's detected physical cores and removes that pool
+after collecting the result. Supply `workers` to override that default:
 
 ```r
-mirai::daemons(4)
-
 analysis <- analyze_dose_response(
   ward,
   bootstrap_times = 10000,
   seed = 2026,
-  backend = "mirai"
+  workers = 12
 )
+```
 
+Existing mirai daemons are reused and remain under caller control. Use
+`backend = "sequential"` to disable automatic parallelization, or configure a
+pool explicitly:
+
+```r
+mirai::daemons(4)
+analysis <- analyze_dose_response(ward, bootstrap_times = 10000)
 mirai::daemons(0)
 ```
 
 Bootstrap samples are generated before parallel dispatch, so the same `seed`
 produces identical results with `backend = "sequential"` and
 `backend = "mirai"`. Only the model refits are sent to workers.
+
+For a non-blocking bootstrap, start a job and collect it when the result is
+needed:
+
+```r
+fit <- fit_dose_response(ward, "beta_poisson")
+job <- bootstrap_dose_response_async(fit, times = 10000, seed = 2026)
+
+# The R console is available while daemons fit the bootstrap samples.
+result <- collect_bootstrap(job)
+```
 
 ## Development
 

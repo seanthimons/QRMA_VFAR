@@ -9,8 +9,9 @@ bootstrap_dose_response(
   times = 10000L,
   resample = c("observed", "fitted"),
   seed = NULL,
-  backend = c("sequential", "mirai"),
-  compute = NULL
+  backend = c("auto", "sequential", "mirai"),
+  compute = NULL,
+  workers = NULL
 )
 }
 \arguments{
@@ -22,12 +23,17 @@ bootstrap_dose_response(
 
 \item{seed}{Optional integer random seed.}
 
-\item{backend}{Execution backend. \code{"sequential"} runs refits in the current
-R process. \code{"mirai"} distributes refits to daemons previously configured
-with \code{\link[mirai:daemons]{mirai::daemons()}}.}
+\item{backend}{Execution backend. \code{"auto"} uses mirai above 1,000 replicates
+when it is installed and otherwise runs sequentially. \code{"sequential"} runs
+refits in the current R process. \code{"mirai"} distributes refits to existing
+daemons or a temporary local pool.}
 
 \item{compute}{Optional mirai compute profile name. Ignored by the sequential
 backend.}
+
+\item{workers}{Number of temporary local mirai daemons. \code{NULL} uses 75\% of
+detected physical cores, with a minimum of one. Ignored when using existing
+daemons or the sequential backend.}
 }
 \value{
 A \code{qdr_bootstrap} tibble with one row per replicate.

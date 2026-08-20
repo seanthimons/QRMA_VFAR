@@ -11,8 +11,9 @@ analyze_dose_response(
   exact_bootstrap_times = 10000L,
   resample = c("observed", "fitted"),
   seed = NULL,
-  backend = c("sequential", "mirai"),
+  backend = c("auto", "sequential", "mirai"),
   compute = NULL,
+  workers = NULL,
   check_trend = TRUE,
   alpha = 0.05
 )
@@ -41,6 +42,9 @@ compare the exact model without bootstrapping it.}
 \code{\link[=bootstrap_dose_response]{bootstrap_dose_response()}}.}
 
 \item{compute}{Optional mirai compute profile name.}
+
+\item{workers}{Number of temporary local mirai daemons, passed to
+\code{\link[=bootstrap_dose_response]{bootstrap_dose_response()}}.}
 
 \item{check_trend}{Warn when an increasing trend is not detected.}
 

@@ -33,6 +33,31 @@ test_that("mirai and sequential backends use identical bootstrap samples", {
   expect_equal(lapply(parallel, identity), lapply(sequential, identity))
 })
 
+test_that("automatic backend and worker defaults are conservative", {
+  expect_identical(select_bootstrap_backend("auto", 1000L, TRUE), "sequential")
+  expect_identical(select_bootstrap_backend("auto", 1001L, TRUE), "mirai")
+  expect_identical(select_bootstrap_backend("auto", 1001L, FALSE), "sequential")
+  expect_identical(recommended_bootstrap_workers(8L), 6L)
+  expect_identical(recommended_bootstrap_workers(24L), 18L)
+  expect_identical(recommended_bootstrap_workers(1L), 1L)
+})
+
+test_that("async bootstrap returns a collectable job and cleans up its daemons", {
+  skip_if_not_installed("mirai", minimum_version = "2.5.0")
+  skip_if(Sys.getenv("_R_CHECK_PACKAGE_NAME_") == "", "requires an installed package namespace")
+  fit <- fit_dose_response(ward_fixture(), "beta_poisson")
+  job <- bootstrap_dose_response_async(fit, times = 8, seed = 42, workers = 1)
+
+  expect_s3_class(job, "qdr_bootstrap_job")
+  expect_true(mirai::daemons_set(.compute = job$compute))
+
+  result <- collect_bootstrap(job)
+
+  expect_s3_class(result, "qdr_bootstrap")
+  expect_equal(nrow(result), 8L)
+  expect_false(mirai::daemons_set(.compute = job$compute))
+})
+
 test_that("prediction curves and plots include bootstrap uncertainty", {
   fit <- fit_dose_response(ward_fixture(), "beta_poisson")
   bootstrap <- bootstrap_dose_response(fit, times = 20, seed = 42)
@@ -108,4 +133,6 @@ test_that("model set and bootstrap counts are validated", {
   expect_error(fit_dose_response_models(ward_fixture(), models = "nonsense"), "subset of")
   expect_error(fit_dose_response_models(ward_fixture(), models = character(0)), "subset of")
   expect_error(analyze_dose_response(ward_fixture(), exact_bootstrap_times = -1), "exact_bootstrap_times")
+  expect_error(bootstrap_dose_response(fit_dose_response(ward_fixture()), workers = 0), "workers")
+  expect_error(collect_bootstrap(list()), "qdr_bootstrap_job")
 })
