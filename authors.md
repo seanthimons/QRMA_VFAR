@@ -11,7 +11,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/seanthimons/singlehit/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/seanthimons/singlehit/blob/v0.1.0/DESCRIPTION)
 
 Thimons S (2026). *singlehit: Mechanistic Dose-Response Models for
 Microbial Risk Assessment*. R package version 0.1.0,
