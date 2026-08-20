@@ -9,9 +9,9 @@ test_that("exact beta-Poisson response is a valid dose-response curve", {
 test_that("exact beta-Poisson survival matches a high-precision oracle", {
   # Slow (~minutes): the oracle sums at least `dose` terms at 240-bit precision.
   # Gated off by default so routine test()/check() stays fast; opt in on CI major
-  # builds via QRMAVFAR_SLOW_TESTS=1.
-  if (!nzchar(Sys.getenv("QRMAVFAR_SLOW_TESTS"))) {
-    skip("High-precision oracle is slow; set QRMAVFAR_SLOW_TESTS=1 to run.")
+  # builds via SINGLEHIT_SLOW_TESTS=1.
+  if (!nzchar(Sys.getenv("SINGLEHIT_SLOW_TESTS"))) {
+    skip("High-precision oracle is slow; set SINGLEHIT_SLOW_TESTS=1 to run.")
   }
   skip_if_not_installed("Rmpfr")
 

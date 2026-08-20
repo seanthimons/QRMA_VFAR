@@ -1,4 +1,4 @@
-# qrmavfar 0.1.0
+# singlehit 0.1.0
 
 - Converted the legacy CAMRA exponential and beta-Poisson workflow into a
   side-effect-free R package API.

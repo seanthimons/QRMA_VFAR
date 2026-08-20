@@ -9,4 +9,4 @@
 ^renv$
 ^renv\.lock$
 ^TODO\.md$
-^qrmavfar\.Rcheck$
+^singlehit\.Rcheck$

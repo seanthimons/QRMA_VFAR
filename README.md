@@ -1,6 +1,6 @@
-# qrmavfar
+# singlehit
 
-`qrmavfar` converts the CAMRA dose-response modeling script into a reusable R
+`singlehit` converts the CAMRA dose-response modeling script into a reusable R
 package. It fits exponential and approximate beta-Poisson models to grouped
 binomial microbial response data and returns tidy results instead of writing
 files into the working directory.
@@ -27,10 +27,10 @@ The package provides:
 <!--
 Not on CRAN yet. Once released:
 
-install.packages("qrmavfar")
+install.packages("singlehit")
 -->
 
-`qrmavfar` isn't on CRAN yet, so you install it straight from GitHub. To do
+`singlehit` isn't on CRAN yet, so you install it straight from GitHub. To do
 that you need a helper package — either **pak** (recommended) or **devtools**.
 You only have to install the helper once; after that it stays on your machine.
 
@@ -40,8 +40,8 @@ You only have to install the helper once; after that it stays on your machine.
 # 1. Install the helper (only needed once, ever)
 install.packages("pak")
 
-# 2. Install qrmavfar from GitHub
-pak::pak("seanthimons/QRMA_VFAR")
+# 2. Install singlehit from GitHub
+pak::pak("seanthimons/singlehit")
 ```
 
 **Option B — devtools:**
@@ -50,8 +50,8 @@ pak::pak("seanthimons/QRMA_VFAR")
 # 1. Install the helper (only needed once, ever)
 install.packages("devtools")
 
-# 2. Install qrmavfar from GitHub
-devtools::install_github("seanthimons/QRMA_VFAR")
+# 2. Install singlehit from GitHub
+devtools::install_github("seanthimons/singlehit")
 ```
 
 Run these lines at the R console (the `>` prompt). If you're asked to install or
@@ -59,7 +59,7 @@ update other packages, say yes. Once it finishes, load the package like any
 other:
 
 ```r
-library(qrmavfar)
+library(singlehit)
 ```
 
 ## Input data format
@@ -82,7 +82,7 @@ summed, and the standardized output adds `total` (`positive + negative`) and
 The bundled `ward_rotavirus` dataset shows the required shape:
 
 ```r
-library(qrmavfar)
+library(singlehit)
 
 ward_rotavirus
 #> # A tibble: 8 x 3
@@ -99,11 +99,11 @@ as_dose_response(ward_rotavirus) # standardized: dose, positive, negative, total
 ## Example
 
 ```r
-library(qrmavfar)
+library(singlehit)
 
 # system.file() locates a data file bundled inside the installed package.
 # For your own data, replace this with a path to your file, e.g. "my_data.txt".
-ward_path <- system.file("extdata", "Ward_rotavirus.txt", package = "qrmavfar")
+ward_path <- system.file("extdata", "Ward_rotavirus.txt", package = "singlehit")
 ward <- read_dose_response(ward_path)
 
 analysis <- analyze_dose_response(
@@ -223,7 +223,7 @@ result <- collect_bootstrap(job)
 Development notes and owner-requested workflow follow-ups live in [TODO.md](TODO.md).
 
 Boosterpak remains optional repository-development tooling. It is not a package
-dependency and is not needed to install or use `qrmavfar`.
+dependency and is not needed to install or use `singlehit`.
 
 For development, the original Ward source file remains at
 `data/raw/Ward_rotavirus.txt`. The legacy script is retained under `dev/` as a
